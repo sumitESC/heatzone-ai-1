@@ -1,10 +1,10 @@
-import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { citiesTable } from "./cities";
 
-export const recommendationsTable = pgTable("recommendations", {
-  id: serial("id").primaryKey(),
+export const recommendationsTable = sqliteTable("recommendations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   cityId: integer("city_id").notNull().references(() => citiesTable.id),
   category: text("category").notNull(),
   title: text("title").notNull(),
@@ -12,7 +12,7 @@ export const recommendationsTable = pgTable("recommendations", {
   priority: text("priority").notNull(),
   impact: text("impact").notNull(),
   icon: text("icon").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().defaultNow(),
 });
 
 export const insertRecommendationSchema = createInsertSchema(recommendationsTable).omit({ id: true, createdAt: true });

@@ -44,7 +44,7 @@ export default function Dashboard() {
         />
         <StatCard 
           title="Avg Heat Risk" 
-          value={overview.avgHeatRisk.toFixed(1)} 
+          value={(overview.avgHeatRisk || 0).toFixed(1)} 
           subtitle="Out of 100"
           icon={<Activity className="w-5 h-5" />}
           delay={0.2}
@@ -52,15 +52,15 @@ export default function Dashboard() {
         />
         <StatCard 
           title="Extreme Zones" 
-          value={overview.extremeHeatCities} 
+          value={overview.extremeHeatCities || 0} 
           subtitle="Cities in red zone"
           icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
-          className={overview.extremeHeatCities > 0 ? "border-red-500/30" : ""}
+          className={(overview.extremeHeatCities || 0) > 0 ? "border-red-500/30" : ""}
           delay={0.3}
         />
         <StatCard 
           title="Avg Temperature" 
-          value={`${overview.avgTemperature.toFixed(1)}°C`} 
+          value={`${(overview.avgTemperature || 0).toFixed(1)}°C`} 
           icon={<Thermometer className="w-5 h-5" />}
           delay={0.4}
         />
@@ -146,11 +146,11 @@ export default function Dashboard() {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Thermometer className="w-4 h-4" />
-                    {city.temperature.toFixed(1)}°C
+                    {(city.temperature || 0).toFixed(1)}°C
                   </div>
                   <div className="flex items-center gap-1">
                     <Car className="w-4 h-4" />
-                    {(city.vehicleDensity / 1000).toFixed(1)}k /km²
+                    {((city.vehicleDensity || 0) / 1000).toFixed(1)}k /km²
                   </div>
                 </div>
               </Link>

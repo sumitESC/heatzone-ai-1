@@ -1,10 +1,10 @@
-import { pgTable, serial, real, integer, text, timestamp } from "drizzle-orm/pg-core";
+import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { citiesTable } from "./cities";
 
-export const heatPredictionsTable = pgTable("heat_predictions", {
-  id: serial("id").primaryKey(),
+export const heatPredictionsTable = sqliteTable("heat_predictions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   cityId: integer("city_id").notNull().references(() => citiesTable.id),
   heatRiskScore: real("heat_risk_score").notNull(),
   heatZone: text("heat_zone").notNull(),
@@ -16,7 +16,7 @@ export const heatPredictionsTable = pgTable("heat_predictions", {
   builtUpRatio: real("built_up_ratio").notNull(),
   coolingIndex: real("cooling_index").notNull(),
   trafficHeatFactor: real("traffic_heat_factor").notNull(),
-  predictedAt: timestamp("predicted_at", { withTimezone: true }).notNull().defaultNow(),
+  predictedAt: integer("predicted_at", { mode: 'timestamp' }).notNull().defaultNow(),
 });
 
 export const insertPredictionSchema = createInsertSchema(heatPredictionsTable).omit({ id: true, predictedAt: true });

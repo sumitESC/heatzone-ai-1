@@ -16,7 +16,9 @@ export default function Analytics() {
     );
   }
 
-  if (!predictions || !cities) return <div className="p-8 text-center text-red-400">Failed to load analytics data.</div>;
+  if (!predictions || !cities || !Array.isArray(predictions) || !Array.isArray(cities)) {
+    return <div className="p-8 text-center text-red-400">Failed to load analytics data. Please refresh.</div>;
+  }
 
   // Merge datasets for charts
   const mergedData = cities.map(city => {

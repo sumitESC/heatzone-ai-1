@@ -19,7 +19,7 @@ export default function CityDetail() {
   const cityId = params?.cityId ? parseInt(params.cityId, 10) : 0;
   
   const { data, isLoading, error } = useGetCityDataset(cityId, {
-    query: { enabled: !!cityId }
+    query: { enabled: !!cityId, queryKey: ['cityDataset', cityId] }
   });
 
   if (isLoading) {

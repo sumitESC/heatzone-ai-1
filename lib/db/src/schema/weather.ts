@@ -1,10 +1,10 @@
-import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { citiesTable } from "./cities";
 
-export const weatherDataTable = pgTable("weather_data", {
-  id: serial("id").primaryKey(),
+export const weatherDataTable = sqliteTable("weather_data", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   cityId: integer("city_id").notNull().references(() => citiesTable.id),
   temperature: real("temperature").notNull(),
   feelsLike: real("feels_like").notNull(),
@@ -16,7 +16,7 @@ export const weatherDataTable = pgTable("weather_data", {
   uvIndex: real("uv_index"),
   weatherMain: text("weather_main").notNull(),
   weatherDescription: text("weather_description").notNull(),
-  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  recordedAt: integer("recorded_at", { mode: 'timestamp' }).notNull().defaultNow(),
 });
 
 export const insertWeatherSchema = createInsertSchema(weatherDataTable).omit({ id: true, recordedAt: true });

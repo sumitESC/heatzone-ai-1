@@ -1,16 +1,15 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 import * as schema from "./schema";
+import path from "path";
+import { fileURLToPath } from 'url';
 
-const { Pool } = pg;
+import type { Database as SQLiteDatabase } from "better-sqlite3";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+const fallbackDbPath = "d:/code/Heat-Zone-Intel/sqlite.db";
+const dbPath = process.env.DATABASE_URL || fallbackDbPath;
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+export const sqlite: SQLiteDatabase = new Database(dbPath);
+export const db = drizzle(sqlite, { schema });
 
 export * from "./schema";

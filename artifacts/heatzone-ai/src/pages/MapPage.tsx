@@ -110,10 +110,10 @@ export default function MapPage() {
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Heat Zones</h4>
           <div className="space-y-2">
             {[
-              { label: 'Extreme (>80)', color: 'bg-red-500' },
-              { label: 'High (60-80)', color: 'bg-orange-500' },
-              { label: 'Moderate (30-60)', color: 'bg-yellow-500' },
-              { label: 'Cool (<30)', color: 'bg-green-500' }
+              { label: 'Extreme (>50)', color: 'bg-red-500' },
+              { label: 'High (30-50)', color: 'bg-orange-500' },
+              { label: 'Moderate (20-30)', color: 'bg-yellow-500' },
+              { label: 'Cool (<20)', color: 'bg-green-500' }
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2 text-sm text-foreground">
                 <span className={`w-3 h-3 rounded-full ${item.color} shadow-[0_0_8px_currentColor]`}></span>

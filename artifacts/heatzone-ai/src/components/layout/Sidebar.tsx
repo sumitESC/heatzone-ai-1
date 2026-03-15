@@ -1,17 +1,25 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Map as MapIcon, BarChart2, MapPin, Loader2 } from "lucide-react";
+import { LayoutDashboard, Map as MapIcon, BarChart2, MapPin, Loader2, Brain, Search, CalendarDays } from "lucide-react";
 import { useGetCities } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const [location] = useLocation();
   const { data: cities, isLoading } = useGetCities();
+  const [cityFilter, setCityFilter] = useState("");
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/map", label: "Heat Map", icon: MapIcon },
     { href: "/analytics", label: "Analytics", icon: BarChart2 },
+    { href: "/forecast", label: "5-Day Forecast", icon: CalendarDays },
+    { href: "/advisor", label: "AI Advisor", icon: Brain },
   ];
+
+  const filteredCities = Array.isArray(cities)
+    ? cities.filter((c) => c.name.toLowerCase().includes(cityFilter.toLowerCase()))
+    : [];
 
   return (
     <aside className="w-64 bg-card border-r border-border/50 h-screen flex flex-col fixed left-0 top-0 z-40 hidden md:flex">
@@ -52,12 +60,25 @@ export function Sidebar() {
         {/* City Quick Links */}
         <div className="space-y-1">
           <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Monitored Cities</p>
+          
+          {/* City Search Filter */}
+          <div className="relative px-1 mb-2">
+            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Filter cities..."
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="w-full bg-secondary/50 border border-border/50 text-foreground text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/60"
+            />
+          </div>
+
           {isLoading ? (
             <div className="flex items-center justify-center p-4">
               <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
             </div>
-          ) : (
-            cities?.map((city) => {
+          ) : filteredCities.length > 0 ? (
+            filteredCities.map((city) => {
               const cityHref = `/city/${city.id}`;
               const isActive = location === cityHref;
               return (
@@ -76,6 +97,10 @@ export function Sidebar() {
                 </Link>
               );
             })
+          ) : (
+            cityFilter.trim() && (
+              <p className="px-3 py-2 text-xs text-muted-foreground/60 italic">No cities match "{cityFilter}"</p>
+            )
           )}
         </div>
       </div>

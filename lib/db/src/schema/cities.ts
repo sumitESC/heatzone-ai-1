@@ -1,9 +1,9 @@
-import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const citiesTable = pgTable("cities", {
-  id: serial("id").primaryKey(),
+export const citiesTable = sqliteTable("cities", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
@@ -15,6 +15,7 @@ export const citiesTable = pgTable("cities", {
   residentialArea: real("residential_area").notNull(),
   roadArea: real("road_area").notNull(),
   openLand: real("open_land").notNull(),
+  waterBodiesArea: real("water_bodies_area").notNull(),
   forestCover: real("forest_cover").notNull(),
   urbanGreenSpace: real("urban_green_space").notNull(),
   treeDensity: real("tree_density").notNull(),
@@ -24,8 +25,8 @@ export const citiesTable = pgTable("cities", {
   dieselVehicles: integer("diesel_vehicles").notNull(),
   electricVehicles: integer("electric_vehicles").notNull(),
   cngVehicles: integer("cng_vehicles").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().defaultNow(),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
 export const insertCitySchema = createInsertSchema(citiesTable).omit({ id: true, createdAt: true, updatedAt: true });
