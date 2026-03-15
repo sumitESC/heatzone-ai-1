@@ -4,11 +4,11 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   ArrowLeft, Thermometer, Droplets, Wind, CloudRain, Car, TreePine, 
-  Building2, Users, Loader2, AlertCircle, TrendingUp
+  Building2, Users, Loader2, AlertCircle, TrendingUp, MapPin
 } from "lucide-react";
 import { Link } from "wouter";
 import { HeatZoneBadge } from "@/components/HeatZoneBadge";
-import { getPriorityColor } from "@/lib/utils";
+import { cn, getPriorityColor } from "@/lib/utils";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
