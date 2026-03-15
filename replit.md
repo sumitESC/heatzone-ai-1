@@ -1,8 +1,8 @@
-# Workspace
+# HeatZone AI – Uttar Pradesh Urban Heat Intelligence System
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack AI-powered urban heat island detection and analysis platform for major cities in Uttar Pradesh. Analyzes environmental, transportation, and urban infrastructure data to detect heat zones and generate intelligent recommendations.
 
 ## Stack
 
@@ -10,87 +10,101 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
+- **Frontend**: React 19 + Vite + TailwindCSS v4 + Recharts + React-Leaflet
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Maps**: Leaflet / React-Leaflet
+- **Charts**: Recharts
+- **Weather data**: OpenWeather API (+ fallback simulation)
+
+## Monitored Cities
+
+1. Lucknow (state capital)
+2. Kanpur (industrial)
+3. Varanasi (heritage)
+4. Prayagraj
+5. Agra
+6. Ghaziabad (NCR, high density)
+7. Noida (NCR, tech hub)
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server (routes, heat engine, weather service)
+│   └── heatzone-ai/        # React + Vite frontend (dashboard, map, analytics)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/
+│   └── src/seedData.ts     # Seeds all 7 UP cities with realistic data
 ```
 
-## TypeScript & Composite Projects
+## Database Tables
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+- `cities` — city metadata (population, land use, vehicles, green cover)
+- `weather_data` — historical weather readings per city
+- `heat_predictions` — ML-computed heat risk scores and zone classifications
+- `recommendations` — AI-generated recommendations per city
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## ML Heat Risk Engine
 
-## Root Scripts
+Location: `artifacts/api-server/src/lib/heatEngine.ts`
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+**Input features:**
+- Temperature, humidity, wind speed (from OpenWeather API)
+- Vehicle density (vehicles / km²)
+- Population density
+- Green cover ratio (forest + urban green / total area)
+- Built-up ratio (built-up area / total area)
+- Cooling index (green ratio × wind speed)
 
-## Packages
+**Output:**
+- Heat Risk Score (0–100)
+- Heat Zone: cool (<30), moderate (30–60), high (60–80), extreme (80–100)
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## API Routes
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /api/cities | List all 7 UP cities |
+| GET | /api/cities/:id | City details |
+| GET | /api/weather/current/:id | Latest weather for city |
+| GET | /api/weather/history/:id | Weather history |
+| POST | /api/weather/refresh | Fetch fresh weather from OpenWeather API |
+| GET | /api/heatzone/predict/:id | Latest heat prediction |
+| GET | /api/heatzone/all | All city predictions (for map) |
+| GET | /api/heatzone/history/:id | Heat prediction history |
+| GET | /api/recommendations/:id | AI recommendations for city |
+| GET | /api/datasets/city/:id | Full dataset for city detail page |
+| GET | /api/datasets/overview | Dashboard overview stats |
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Frontend Pages
 
-### `lib/db` (`@workspace/db`)
+- `/` — Dashboard with stats cards + heat risk bar chart
+- `/map` — Interactive Leaflet map of UP with heat zone markers
+- `/analytics` — Cross-city comparison charts
+- `/city/:cityId` — Full city analysis with weather + trends + recommendations
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+## Environment Variables
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+- `DATABASE_URL` — PostgreSQL connection string (auto-provisioned)
+- `OPENWEATHER_API_KEY` — OpenWeather API key for real-time weather
+- `PORT` — Server port (auto-assigned)
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+## Seeding Data
 
-### `lib/api-spec` (`@workspace/api-spec`)
+```bash
+pnpm --filter @workspace/scripts run seedData
+```
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
+## Running Codegen
 
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+```bash
+pnpm --filter @workspace/api-spec run codegen
+```
