@@ -4,365 +4,305 @@ import { eq, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-// ─── Tool definitions for Ollama ────────────────────────────────────────────
-const TOOLS = [
-  {
-    type: "function",
-    function: {
-      name: "get_all_cities",
-      description: "Returns a list of all cities in the system with their IDs, names, coordinates, and metadata such as population, vehicles, green cover, etc.",
-      parameters: { type: "object", properties: {}, required: [] }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_city_info",
-      description: "Returns detailed information about a specific city by its numeric ID.",
-      parameters: {
-        type: "object",
-        properties: { city_id: { type: "number", description: "The numeric ID of the city" } },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_current_weather",
-      description: "Returns the latest weather data (temperature, humidity, wind speed, etc.) for a specific city by its numeric ID.",
-      parameters: {
-        type: "object",
-        properties: { city_id: { type: "number", description: "The numeric ID of the city" } },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_weather_history",
-      description: "Returns the last N weather records for a specific city. Useful for temperature trends.",
-      parameters: {
-        type: "object",
-        properties: {
-          city_id: { type: "number", description: "The numeric ID of the city" },
-          limit: { type: "number", description: "Number of records to retrieve (default 20)" }
-        },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_heatzone_prediction",
-      description: "Returns the latest heat zone prediction (heat score, zone, temperature, humidity, vehicle density, green cover, etc.) for a specific city.",
-      parameters: {
-        type: "object",
-        properties: { city_id: { type: "number", description: "The numeric ID of the city" } },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_all_heatzone_predictions",
-      description: "Returns the latest heat zone prediction for every city. Great for comparing cities or generating a geospatial overview.",
-      parameters: { type: "object", properties: {}, required: [] }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_heatzone_history",
-      description: "Returns historical heat zone predictions for a city. Useful for heat risk trend analysis.",
-      parameters: {
-        type: "object",
-        properties: {
-          city_id: { type: "number", description: "The numeric ID of the city" },
-          limit: { type: "number", description: "Number of records to retrieve (default 20)" }
-        },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_5day_forecast",
-      description: "Returns the 5-day weather forecast for a specific city by its numeric ID.",
-      parameters: {
-        type: "object",
-        properties: { city_id: { type: "number", description: "The numeric ID of the city" } },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_all_forecasts_comparison",
-      description: "Returns the 5-day forecast for every city. Useful for cross-city temperature ranking and comparison.",
-      parameters: { type: "object", properties: {}, required: [] }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_city_full_dataset",
-      description: "Returns a full dataset for a city including latest weather, latest heat prediction, recommendations, weather history, and heat history.",
-      parameters: {
-        type: "object",
-        properties: { city_id: { type: "number", description: "The numeric ID of the city" } },
-        required: ["city_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_datasets_overview",
-      description: "Returns an overview of all cities including average heat risk, average temperature, extreme city counts, average green cover, and heat predictions for every city.",
-      parameters: { type: "object", properties: {}, required: [] }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_recommendations",
-      description: "Returns AI-generated heat reduction recommendations for a specific city.",
-      parameters: {
-        type: "object",
-        properties: { city_id: { type: "number", description: "The numeric ID of the city" } },
-        required: ["city_id"]
-      }
-    }
-  }
-];
+// ─── Intent detection: figure out what the user wants ───────────────────────
+interface DetectedIntent {
+  type: "map" | "chart" | "report" | "forecast" | "comparison" | "recommendations" | "heatzone" | "weather" | "overview" | "general";
+  cityId?: number;
+  cityName?: string;
+  chartType?: string;
+}
 
-// ─── Tool executor ──────────────────────────────────────────────────────────
-async function executeTool(name: string, args: any): Promise<any> {
-  const BASE = "http://127.0.0.1:5000/api";
+async function detectIntent(userMessage: string, contextCityId?: number): Promise<DetectedIntent> {
+  const msg = userMessage.toLowerCase();
+
+  // Look up city from message
+  const allCities = await db.select().from(citiesTable);
+  let matchedCity = allCities.find(c => msg.includes(c.name.toLowerCase()));
+
+  // Fallback to context city
+  const cityId = matchedCity?.id ?? contextCityId ?? undefined;
+  const cityName = matchedCity?.name ?? undefined;
+
+  // Detect intents
+  if (msg.match(/\b(report|full analysis|complete analytics|generate report|detailed report|full report)\b/)) {
+    return { type: "report", cityId, cityName };
+  }
+  if (msg.match(/\b(map|geospatial|location|satellite)\b/)) {
+    return { type: "map", cityId, cityName };
+  }
+  if (msg.match(/\b(compar|ranking|rank|versus|vs)\b/)) {
+    return { type: "comparison", cityId, cityName };
+  }
+  if (msg.match(/\b(forecast|5.day|five.day|next.*days|upcoming)\b/)) {
+    return { type: "forecast", cityId, cityName };
+  }
+  if (msg.match(/\b(trend|history|historical|past|graph|chart|temperature trend|temp trend)\b/)) {
+    return { type: "chart", cityId, cityName };
+  }
+  if (msg.match(/\b(recommend|suggestion|reduc|solution|cool|action|mitigation)\b/)) {
+    return { type: "recommendations", cityId, cityName };
+  }
+  if (msg.match(/\b(heat.*score|heat.*zone|heat.*risk|heat.*index|urban heat)\b/)) {
+    return { type: "heatzone", cityId, cityName };
+  }
+  if (msg.match(/\b(weather|temperature|humidity|wind|rain|current)\b/)) {
+    return { type: "weather", cityId, cityName };
+  }
+  if (msg.match(/\b(overview|summary|all cities|platform|dashboard)\b/)) {
+    return { type: "overview", cityId, cityName };
+  }
+
+  return { type: "general", cityId, cityName };
+}
+
+// ─── Data fetcher: pre-fetch relevant data ──────────────────────────────────
+async function fetchContextData(intent: DetectedIntent): Promise<{ data: any; renderTags: string[] }> {
+  const renderTags: string[] = [];
+  let data: any = {};
 
   try {
-    let url = "";
-    switch (name) {
-      case "get_all_cities":
-        url = `${BASE}/cities`;
-        break;
-      case "get_city_info":
-        url = `${BASE}/cities/${args.city_id}`;
-        break;
-      case "get_current_weather":
-        url = `${BASE}/weather/current/${args.city_id}`;
-        break;
-      case "get_weather_history":
-        url = `${BASE}/weather/history/${args.city_id}?limit=${args.limit || 20}`;
-        break;
-      case "get_heatzone_prediction":
-        url = `${BASE}/heatzone/predict/${args.city_id}`;
-        break;
-      case "get_all_heatzone_predictions":
-        url = `${BASE}/heatzone/all`;
-        break;
-      case "get_heatzone_history":
-        url = `${BASE}/heatzone/history/${args.city_id}?limit=${args.limit || 20}`;
-        break;
-      case "get_5day_forecast":
-        url = `${BASE}/forecast/${args.city_id}`;
-        break;
-      case "get_all_forecasts_comparison":
-        url = `${BASE}/forecast/all/compare`;
-        break;
-      case "get_city_full_dataset":
-        url = `${BASE}/datasets/city/${args.city_id}`;
-        break;
-      case "get_datasets_overview":
-        url = `${BASE}/datasets/overview`;
-        break;
-      case "get_recommendations":
-        url = `${BASE}/recommendations/${args.city_id}`;
-        break;
-      default:
-        return { error: `Unknown tool: ${name}` };
-    }
+    const BASE = "http://127.0.0.1:5000/api";
 
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      return { error: `API returned ${resp.status}: ${resp.statusText}` };
+    switch (intent.type) {
+      case "report": {
+        if (intent.cityId) {
+          const [dsResp, fcResp, recResp] = await Promise.all([
+            fetch(`${BASE}/datasets/city/${intent.cityId}`),
+            fetch(`${BASE}/forecast/${intent.cityId}`),
+            fetch(`${BASE}/recommendations/${intent.cityId}`)
+          ]);
+          data.dataset = await dsResp.json() as any;
+          data.forecast = await fcResp.json() as any;
+          data.recommendations = await recResp.json() as any;
+          renderTags.push(`[RENDER_REPORT:${intent.cityId}]`);
+        } else {
+          const resp = await fetch(`${BASE}/datasets/overview`);
+          data.overview = await resp.json() as any;
+          renderTags.push("[RENDER_MAP:all]");
+          renderTags.push("[RENDER_CHART:city_comparison:all]");
+        }
+        break;
+      }
+      case "map": {
+        if (intent.cityId) {
+          const resp = await fetch(`${BASE}/heatzone/predict/${intent.cityId}`);
+          data.heatzone = await resp.json() as any;
+          renderTags.push(`[RENDER_MAP:${intent.cityId}]`);
+        } else {
+          const resp = await fetch(`${BASE}/heatzone/all`);
+          data.allHeatzones = await resp.json() as any;
+          renderTags.push("[RENDER_MAP:all]");
+        }
+        break;
+      }
+      case "comparison": {
+        const [hzResp, fcResp] = await Promise.all([
+          fetch(`${BASE}/heatzone/all`),
+          fetch(`${BASE}/forecast/all/compare`)
+        ]);
+        data.allHeatzones = await hzResp.json() as any;
+        data.allForecasts = await fcResp.json() as any;
+        renderTags.push("[RENDER_CHART:city_comparison:all]");
+        renderTags.push("[RENDER_CHART:temperature_ranking:all]");
+        break;
+      }
+      case "forecast": {
+        if (intent.cityId) {
+          const resp = await fetch(`${BASE}/forecast/${intent.cityId}`);
+          data.forecast = await resp.json() as any;
+          renderTags.push(`[RENDER_CHART:forecast:${intent.cityId}]`);
+          renderTags.push(`[RENDER_CARD:forecast_table:${intent.cityId}]`);
+        } else {
+          const resp = await fetch(`${BASE}/forecast/all/compare`);
+          data.allForecasts = await resp.json() as any;
+          renderTags.push("[RENDER_CHART:temperature_ranking:all]");
+        }
+        break;
+      }
+      case "chart": {
+        if (intent.cityId) {
+          const [wResp, hResp] = await Promise.all([
+            fetch(`${BASE}/weather/history/${intent.cityId}?limit=15`),
+            fetch(`${BASE}/heatzone/history/${intent.cityId}?limit=15`)
+          ]);
+          data.weatherHistory = await wResp.json() as any;
+          data.heatHistory = await hResp.json() as any;
+          renderTags.push(`[RENDER_CHART:temperature_trend:${intent.cityId}]`);
+          renderTags.push(`[RENDER_CHART:heat_trend:${intent.cityId}]`);
+        } else {
+          const resp = await fetch(`${BASE}/heatzone/all`);
+          data.allHeatzones = await resp.json() as any;
+          renderTags.push("[RENDER_CHART:city_comparison:all]");
+        }
+        break;
+      }
+      case "recommendations": {
+        if (intent.cityId) {
+          const [recResp, hzResp] = await Promise.all([
+            fetch(`${BASE}/recommendations/${intent.cityId}`),
+            fetch(`${BASE}/heatzone/predict/${intent.cityId}`)
+          ]);
+          data.recommendations = await recResp.json() as any;
+          data.heatzone = await hzResp.json() as any;
+          renderTags.push(`[RENDER_CARD:recommendations:${intent.cityId}]`);
+        }
+        break;
+      }
+      case "heatzone": {
+        if (intent.cityId) {
+          const resp = await fetch(`${BASE}/heatzone/predict/${intent.cityId}`);
+          data.heatzone = await resp.json() as any;
+          renderTags.push(`[RENDER_CARD:heat_score:${intent.cityId}]`);
+          renderTags.push(`[RENDER_CARD:urban_indicators:${intent.cityId}]`);
+        } else {
+          const resp = await fetch(`${BASE}/heatzone/all`);
+          data.allHeatzones = await resp.json() as any;
+          renderTags.push("[RENDER_MAP:all]");
+        }
+        break;
+      }
+      case "weather": {
+        if (intent.cityId) {
+          const [wResp, hzResp] = await Promise.all([
+            fetch(`${BASE}/weather/current/${intent.cityId}`),
+            fetch(`${BASE}/heatzone/predict/${intent.cityId}`)
+          ]);
+          data.weather = await wResp.json() as any;
+          data.heatzone = await hzResp.json() as any;
+          renderTags.push(`[RENDER_CARD:heat_score:${intent.cityId}]`);
+        }
+        break;
+      }
+      case "overview": {
+        const resp = await fetch(`${BASE}/datasets/overview`);
+        data.overview = await resp.json() as any;
+        renderTags.push("[RENDER_MAP:all]");
+        renderTags.push("[RENDER_CHART:city_comparison:all]");
+        break;
+      }
+      default: {
+        // For general queries, provide city list + overview
+        const [citiesResp, ovResp] = await Promise.all([
+          fetch(`${BASE}/cities`),
+          fetch(`${BASE}/datasets/overview`)
+        ]);
+        data.cities = await citiesResp.json() as any;
+        data.overview = await ovResp.json() as any;
+        break;
+      }
     }
-    return await resp.json() as any;
-  } catch (err: any) {
-    return { error: `Tool execution failed: ${err.message}` };
+  } catch (err) {
+    console.error("[Data Fetch Error]", err);
   }
+
+  return { data, renderTags };
 }
 
 // ─── System prompt ──────────────────────────────────────────────────────────
-function buildSystemPrompt(activeContext: any): string {
-  return `You are **Aria**, the AI Climate Advisor for the HeatZone Urban Climate Intelligence Platform. You are a warm, polite, and professional female climate analyst. Speak in a warm, empathetic, and encouraging style — like a knowledgeable mentor who genuinely cares about cities and their people.
+function buildSystemPrompt(fetchedData: any, renderTags: string[], intent: DetectedIntent): string {
+  const tagsBlock = renderTags.length > 0
+    ? `\n\n## MANDATORY RENDER TAGS — YOU MUST INCLUDE THESE EXACTLY AS SHOWN (each on its own line):\n${renderTags.join("\n")}\n`
+    : "";
 
-## Your Identity
-- Name: Aria (HeatZone AI Advisor)
-- Personality: Polite, warm, professional, slightly analytical, encouraging
-- You have conversational memory within this session
+  return `You are **Aria**, the AI Climate Advisor for the HeatZone Urban Climate Intelligence Platform — covering Uttar Pradesh, India.
+You are a warm, polite, and professional female climate analyst. Speak with kindness and expertise.
 
-## Tools Available
-You have access to real-time tools that query the HeatZone database. ALWAYS use tools to get the latest data before answering. Never fabricate data. The tools give you live access to:
-- City information, weather data, heat zone predictions
-- 5-day forecasts, historical trends
-- Full datasets and city comparisons
-- AI-generated recommendations
+## YOUR REAL DATA (from the database — USE ONLY THIS, NEVER INVENT DATA):
+${JSON.stringify(fetchedData, null, 2)}
 
-## Current Context (from UI)
-${JSON.stringify(activeContext, null, 2)}
+## RULES — READ CAREFULLY:
+1. You MUST use ONLY the real data provided above. NEVER fabricate city names, temperatures, heat scores, or any numbers.
+2. The cities in this platform are real Uttar Pradesh cities from the database. The data above contains their ACTUAL names and values.
+3. If data is missing or an error occurred, say: "I don't have enough data for this right now. Please try refreshing the data or selecting a specific city."
+${tagsBlock}
+4. If MANDATORY RENDER TAGS are listed above, you MUST include them in your response, each on its OWN LINE (not inside a sentence).
+5. Place the render tags AFTER a brief textual introduction/analysis. Example format:
 
-## When to use which tool
-- User asks about a city's current weather → get_current_weather
-- User asks about heat score or heat zone → get_heatzone_prediction
-- User asks for forecast → get_5day_forecast
-- User asks to compare cities → get_all_heatzone_predictions or get_all_forecasts_comparison
-- User asks for recommendations → get_recommendations
-- User asks for trends or history → get_weather_history or get_heatzone_history
-- User asks for a map → get_all_heatzone_predictions (or get_heatzone_prediction for a single city)
-- User asks for overview/analytics → get_datasets_overview
-- User asks for full city data → get_city_full_dataset
-- If you don't know the city ID, first call get_all_cities to look it up by name
+Here is the heat analysis for [City Name] showing a heat score of X/100...
 
-## CRITICAL: Rich Widget Rendering
-When you have data and the user asks for visual content, you MUST embed special tags in your response so the frontend can render interactive widgets. Place them on their own line.
-Use EXACTLY these tag formats (the frontend parses them):
+[RENDER_CARD:heat_score:3]
 
-### Maps
-- Single city map: \`[RENDER_MAP:cityId]\` — e.g. \`[RENDER_MAP:3]\`
-- All cities map: \`[RENDER_MAP:all]\`
+The key drivers are...
 
-### Charts
-- Temperature trend for a city: \`[RENDER_CHART:temperature_trend:cityId]\` — e.g. \`[RENDER_CHART:temperature_trend:3]\`
-- Heat score trend: \`[RENDER_CHART:heat_trend:cityId]\`
-- 5-day forecast chart: \`[RENDER_CHART:forecast:cityId]\`
-- Compare all cities temperatures: \`[RENDER_CHART:city_comparison:all]\`
-- 5-day temperature ranking: \`[RENDER_CHART:temperature_ranking:all]\`
+6. Be warm, polite, encouraging. Use markdown formatting (bold, headers, bullet lists).
+7. NEVER mention Ollama, qwen, backend systems, APIs, or databases.
+8. You are Aria. You have access to real-time data. Never say you cannot provide real-time data.
+9. When analyzing data, reference ACTUAL values from the data provided above.
+10. Keep responses concise but informative. Focus on insights, not raw data dumps.
 
-### Data Cards
-- Key urban indicators: \`[RENDER_CARD:urban_indicators:cityId]\`
-- Smart city heat score: \`[RENDER_CARD:heat_score:cityId]\`
-- AI reduction recommendations: \`[RENDER_CARD:recommendations:cityId]\`
-- 5-day forecast table: \`[RENDER_CARD:forecast_table:cityId]\`
+## YOUR CAPABILITIES:
+- Real-time weather analysis for UP cities
+- Heat zone scoring and risk analysis
+- 5-day weather forecasts
+- Temperature trends and history
+- City-to-city comparisons
+- AI-powered heat reduction recommendations
+- Interactive maps and charts (via RENDER tags)
+- Full analytics reports
 
-### Full AI Report (IMPORTANT — use when asked for "report", "full analysis", "generate report", "complete analytics")
-- Full city report with map, graphs, indicators, forecast, and recommendations: \`[RENDER_REPORT:cityId]\` — e.g. \`[RENDER_REPORT:3]\`
-- This generates a comprehensive analytics document with: geospatial map, heat score radar, urban indicators, temperature trend, 5-day forecast chart, heat score history, and AI recommendations — all in one view.
-
-IMPORTANT RULES:
-1. ALWAYS use tools to fetch data; NEVER make up numbers.
-2. Place tags on their OWN LINE, not inside paragraphs.
-3. When showing maps/charts, still provide a brief textual analysis alongside them.
-4. If user asks to "show" something visual, ALWAYS include the appropriate RENDER tag.
-5. Be warm, polite, and encouraging. Address the user kindly.
-6. When asked "who are you", explain you are Aria, the built-in AI advisor.
-7. NEVER mention Ollama, qwen, or backend systems.
-8. Format text responses with markdown — use bold, headers, bullet lists for clarity.
-9. When user asks for a "report" or "full analysis", use [RENDER_REPORT:cityId]. Provide a brief introduction before the tag.`;
+## IDENTITY:
+If asked who you are: "I'm Aria, your AI Climate Advisor on the HeatZone platform. I can analyze heat data, show you maps and charts, generate reports, and provide smart city recommendations for Uttar Pradesh cities."`;
 }
 
 // ─── Main chat endpoint ─────────────────────────────────────────────────────
 router.post("/chat", async (req: Request, res: Response): Promise<void> => {
   try {
     const { messages, context } = req.body;
-    let activeContext = context || {};
 
-    // Auto-detect city from user message if no context provided
-    if (!activeContext?.id) {
-      const lastUserMessage = messages?.filter((m: any) => m.role === "user").pop()?.content || "";
-      if (lastUserMessage) {
-        const allCities = await db.select().from(citiesTable);
-        const matched = allCities.find((c: any) =>
-          lastUserMessage.toLowerCase().includes(c.name.toLowerCase())
-        );
-        if (matched) {
-          activeContext = { id: matched.id, name: matched.name, source: "auto-detect" };
-        }
-      }
-    }
+    // Get the latest user message
+    const lastUserMessage = messages?.filter((m: any) => m.role === "user").pop()?.content || "";
 
-    const systemPrompt = buildSystemPrompt(activeContext);
+    // Detect intent from user message
+    const contextCityId = context?.id ? parseInt(context.id, 10) : undefined;
+    const intent = await detectIntent(lastUserMessage, contextCityId);
+
+    console.log(`[Chat] Intent: ${intent.type}, City: ${intent.cityName || "none"} (ID: ${intent.cityId || "none"})`);
+
+    // Pre-fetch all relevant data
+    const { data: fetchedData, renderTags } = await fetchContextData(intent);
+
+    console.log(`[Chat] Fetched data keys: ${Object.keys(fetchedData).join(", ")}`);
+    console.log(`[Chat] Render tags: ${renderTags.join(", ") || "none"}`);
+
+    // Build system prompt with real data injected
+    const systemPrompt = buildSystemPrompt(fetchedData, renderTags, intent);
 
     const formattedMessages = [
       { role: "system", content: systemPrompt },
       ...(messages || [])
     ];
 
-    // ─── Tool calling loop (max 5 iterations) ──────────────────
-    let currentMessages = formattedMessages;
-    const MAX_ITERATIONS = 5;
-
-    for (let i = 0; i < MAX_ITERATIONS; i++) {
-      const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "qwen3:4b",
-          messages: currentMessages,
-          tools: TOOLS,
-          stream: false
-        })
-      });
-
-      if (!ollamaResponse.ok) {
-        throw new Error(`Ollama API error: ${ollamaResponse.statusText}`);
-      }
-
-      const data: any = await ollamaResponse.json();
-      const msg = data.message;
-
-      // If no tool calls, we have the final answer
-      if (!msg.tool_calls || msg.tool_calls.length === 0) {
-        res.json(data);
-        return;
-      }
-
-      // The model wants to call tools — execute them and loop
-      currentMessages.push(msg); // Add assistant message with tool_calls
-
-      for (const toolCall of msg.tool_calls) {
-        const toolName = toolCall.function.name;
-        const toolArgs = toolCall.function.arguments || {};
-
-        console.log(`[Tool Call ${i + 1}] ${toolName}(${JSON.stringify(toolArgs)})`);
-
-        const result = await executeTool(toolName, toolArgs);
-
-        currentMessages.push({
-          role: "tool",
-          content: JSON.stringify(result)
-        });
-      }
-    }
-
-    // If we exceeded iterations, ask for a final answer
-    currentMessages.push({
-      role: "user",
-      content: "Please summarize the information you've gathered and provide your final answer now."
-    });
-
-    const finalResponse = await fetch("http://127.0.0.1:11434/api/chat", {
+    // Call Ollama (no tools — data is already in the prompt)
+    const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "qwen3:4b",
-        messages: currentMessages,
+        messages: formattedMessages,
         stream: false
       })
     });
 
-    if (!finalResponse.ok) {
-      throw new Error(`Ollama API error (final): ${finalResponse.statusText}`);
+    if (!ollamaResponse.ok) {
+      throw new Error(`Ollama API error: ${ollamaResponse.statusText}`);
     }
 
-    const finalData: any = await finalResponse.json();
-    res.json(finalData);
+    const responseData: any = await ollamaResponse.json();
+    let content: string = responseData.message?.content || "";
+
+    // ─── Post-processing: ensure RENDER tags are present ─────
+    // If the model forgot to include the mandatory render tags, append them
+    for (const tag of renderTags) {
+      if (!content.includes(tag)) {
+        content += `\n\n${tag}`;
+      }
+    }
+
+    // Strip any <think>...</think> blocks that qwen3 sometimes emits
+    content = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    responseData.message.content = content;
+    res.json(responseData);
   } catch (error) {
     console.error("Chat API error:", error);
     res.status(500).json({ error: "Failed to communicate with AI Advisor" });
