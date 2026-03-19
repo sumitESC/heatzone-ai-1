@@ -6,6 +6,7 @@ import heatzoneRouter from "./heatzone.js";
 import recommendationsRouter from "./recommendations.js";
 import datasetsRouter from "./datasets.js";
 import forecastRouter from "./forecast.js";
+import chatRouter from "./chat.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(heatzoneRouter);
 router.use(recommendationsRouter);
 router.use(datasetsRouter);
 router.use(forecastRouter);
+router.use(chatRouter);
 
 export default router;

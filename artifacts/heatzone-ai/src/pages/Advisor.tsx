@@ -3,15 +3,20 @@ import { useGetCities, useGetCityDataset } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, Brain, Car, TreePine, Droplets, Building2, Users, Loader2, PlayCircle, MapPin, ChevronDown, Check
+  ArrowLeft, Brain, Car, TreePine, Droplets, Building2, Users, Loader2, PlayCircle, MapPin, ChevronDown, Check, Bot
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Chatbot } from "@/components/Chatbot";
 
 export default function Advisor() {
   const { data: cities, isLoading: loadingCities } = useGetCities();
   const [selectedCityId, setSelectedCityId] = useState<number | "">("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Import Chatbot dynamically to avoid circular dependency issues if any
+  // But we can just import it at the top normally.
+
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -113,6 +118,15 @@ export default function Advisor() {
       {dataset && !loadingDataset && (
         <AdvisorResults city={dataset.city} />
       )}
+
+      {/* Chatbot Section - Always Visible */}
+      <div className="mt-8">
+        <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
+          <Bot className="w-6 h-6 text-purple-400" />
+          Interactive AI Advisor
+        </h3>
+        <Chatbot contextData={dataset && dataset.city ? dataset.city : { status: "No city currently selected by the user. Ask them to name a specific UP city if they want local analysis." }} />
+      </div>
     </div>
   );
 }
