@@ -18,7 +18,6 @@
   <img alt="OpenWeather" src="https://img.shields.io/badge/OpenWeather_API-EB6E4B?logo=openweathermap&logoColor=white" />
 </p>
 
----
 
 ## Table of Contents
 
@@ -41,7 +40,6 @@
 17. [References](#17-references)
 18. [License](#18-license)
 
----
 
 ## 1. Abstract
 
@@ -51,7 +49,6 @@ The platform integrates **live meteorological data** from the OpenWeatherMap API
 
 The system features an interactive geospatial map (Leaflet), comparative analytics (Recharts), per-city deep-dive dashboards with radar and time-series charts, and an **AI Heat Reduction Advisor** that generates context-aware, city-specific recommendations for cooling strategies.
 
----
 
 ## 2. Introduction
 
@@ -59,10 +56,6 @@ India's urban landscape is expanding at an unprecedented rate. According to the 
 
 **HeatZone AI** was developed to address this challenge by creating a centralized intelligence platform that:
 
-- **Monitors** real-time weather conditions for 24 UP cities simultaneously
-- **Predicts** heat risk using a composite, multi-variate scoring algorithm
-- **Visualizes** heat patterns through interactive maps and comparative charts
-- **Advises** urban planners with AI-generated, data-driven recommendations for heat mitigation
 
 The platform serves as both a **decision-support system** for government agencies and urban planners, and a **research tool** for studying the interplay between urbanization parameters and thermal comfort in North Indian cities.
 
@@ -709,3 +702,5 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for d
   <b>Built with ❤️ for a cooler, smarter Uttar Pradesh</b><br/>
   <sub>HeatZone AI — Urban Heat Island Intelligence Platform v1.0.0</sub>
 </p>
+
+# heatzone-ai-1
