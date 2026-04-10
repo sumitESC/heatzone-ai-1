@@ -1,6 +1,7 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LayoutProps {
   children: ReactNode;
@@ -8,6 +9,26 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const hasRefreshed = useRef(false);
+
+  // Auto-refresh weather data on page load/reload — silently in the background
+  useEffect(() => {
+    if (hasRefreshed.current) return;
+    hasRefreshed.current = true;
+
+    fetch("/api/weather/refresh", { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(`[AutoRefresh] ${data.citiesUpdated} cities updated, JSON dataset appended`);
+        // Invalidate all data caches so the UI updates with fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/datasets/overview"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/heatzone/all"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/weather"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/forecast"] });
+      })
+      .catch((err) => console.warn("[AutoRefresh] Background refresh failed:", err));
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-background flex text-foreground">
@@ -24,3 +45,4 @@ export function Layout({ children }: LayoutProps) {
     </div>
   );
 }
+

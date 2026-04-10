@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Send, Mic, Bot, User, Loader2, StopCircle, Volume2, VolumeX, MapPin, BarChart3, Sparkles } from "lucide-react";
+import { Send, Mic, Bot, User, Loader2, StopCircle, Volume2, VolumeX, MapPin, BarChart3, Sparkles, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { MapContainer, TileLayer, CircleMarker, Popup, ZoomControl } from "react-leaflet";
@@ -67,7 +67,7 @@ function ChatMapWidget({ cityId }: { cityId: string }) {
             <CircleMarker
               key={city.cityId || city.id}
               center={[city.latitude, city.longitude]}
-              radius={Math.max(8, (city.heatRiskScore || 50) / 4)}
+              radius={city.temperature ? city.temperature * 0.85 : 30}
               pathOptions={{ color, fillColor: color, fillOpacity: 0.5, weight: 2 }}
             >
               <Popup>
@@ -274,6 +274,11 @@ function ChatDataCardWidget({ cardType, targetId }: { cardType: string; targetId
             setData(await resp.json());
             break;
           }
+          case "advisory": {
+            const resp = await fetch(`/api/weather/advisory/${targetId}`);
+            setData(await resp.json());
+            break;
+          }
           default:
             setData(null);
         }
@@ -427,6 +432,54 @@ function ChatDataCardWidget({ cardType, targetId }: { cardType: string; targetId
     );
   }
 
+  // ─── Advisory Card ─────
+  if (cardType === "advisory" && data.advisories) {
+    const severityColors: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+      critical: { bg: "from-red-950/40 to-rose-950/30", border: "border-red-500/30", text: "text-red-400", badge: "bg-red-500/20 text-red-300" },
+      alert: { bg: "from-orange-950/40 to-amber-950/30", border: "border-orange-500/30", text: "text-orange-400", badge: "bg-orange-500/20 text-orange-300" },
+      warning: { bg: "from-amber-950/30 to-yellow-950/20", border: "border-amber-500/20", text: "text-amber-400", badge: "bg-amber-500/20 text-amber-300" },
+      info: { bg: "from-blue-950/30 to-cyan-950/20", border: "border-blue-500/20", text: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" }
+    };
+    const domainIcons: Record<string, string> = {
+      health: "🏥", agriculture: "🌾", travel: "🚗", infrastructure: "🏗️", public_safety: "🛡️"
+    };
+    const overallStyle = severityColors[data.overallSeverity] || severityColors.info;
+
+    return (
+      <div className={`my-2 bg-gradient-to-br ${overallStyle.bg} ${overallStyle.border} border rounded-xl p-4 shadow-lg`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className={`w-4 h-4 ${overallStyle.text}`} />
+            <span className="text-sm font-bold text-foreground">{data.cityName} — AI Advisories</span>
+          </div>
+          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${overallStyle.badge}`}>
+            {data.overallSeverity}
+          </span>
+        </div>
+        <div className="space-y-2">
+          {data.advisories.map((adv: any, i: number) => {
+            const style = severityColors[adv.severity] || severityColors.info;
+            return (
+              <div key={i} className={`bg-secondary/30 ${style.border} border rounded-lg px-3 py-2.5`}>
+                <div className="flex items-start gap-2">
+                  <span className="text-base mt-0.5">{domainIcons[adv.domain] || "⚡"}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className={`text-xs font-bold ${style.text}`}>{adv.title}</p>
+                      <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${style.badge}`}>{adv.severity}</span>
+                    </div>
+                    <p className="text-[11px] text-foreground/80 leading-relaxed">{adv.message}</p>
+                    <p className="text-[9px] text-muted-foreground mt-1 italic">Trigger: {adv.trigger}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return <div className="p-3 text-sm text-muted-foreground bg-secondary/30 rounded-xl">Widget could not render.</div>;
 }
 
@@ -469,9 +522,9 @@ function ChatReportWidget({ cityId }: { cityId: string }) {
     { factor: "Temperature", value: Math.min(100, (pred.temperature || 0) * 2) },
     { factor: "Humidity", value: pred.humidity || 0 },
     { factor: "Vehicles", value: Math.min(100, pred.vehicleDensity || 0) },
-    { factor: "Population", value: Math.min(100, pred.populationDensity || 0) },
     { factor: "Green Cover", value: Math.min(100, (pred.greenCoverRatio || 0) * 2) },
-    { factor: "Built-Up", value: Math.min(100, pred.builtUpRatio || 0) },
+    { factor: "NDVI", value: Math.max(0, (pred.ndvi || 0) * 100) },
+    { factor: "NDBI", value: Math.max(0, (pred.ndbi || 0) * 100) },
   ] : [];
 
   const indicators = [
@@ -511,10 +564,10 @@ function ChatReportWidget({ cityId }: { cityId: string }) {
               {pred && (
                 <CircleMarker
                   center={[city.latitude, city.longitude]}
-                  radius={Math.max(12, (pred.heatRiskScore || 50) / 3)}
+                  radius={pred.temperature ? pred.temperature * 0.85 : 30}
                   pathOptions={{ color: heatColor, fillColor: heatColor, fillOpacity: 0.5, weight: 2 }}
                 >
-                  <Popup><b>{city.name}</b> — Heat Score: {pred.heatRiskScore?.toFixed(1)}</Popup>
+                  <Popup><b>{city.name}</b> — Temperature: {pred.temperature?.toFixed(1)}</Popup>
                 </CircleMarker>
               )}
             </MapContainer>
@@ -933,10 +986,12 @@ export function Chatbot({ contextData }: { contextData: any }) {
             <p className="text-xs text-center max-w-xs mt-1">I can show you maps, graphs, forecasts, city comparisons, heat analytics, and more. Just ask!</p>
             <div className="mt-4 flex flex-wrap gap-2 justify-center max-w-sm">
               {[
-                "Show me a map of all cities",
+                "What's the weather in Lucknow today?",
+                "Health advisory for Varanasi",
+                "Show tomorrow's forecast for Agra",
                 "Compare all city temperatures",
-                "Show temperature trend for Lucknow",
-                "What's the heat score of Varanasi?",
+                "Who are you and what can you do?",
+                "Generate full report for Kanpur",
               ].map((q) => (
                 <button
                   key={q}

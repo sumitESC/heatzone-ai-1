@@ -6,7 +6,8 @@
     "dev": "pnpm --filter @workspace/heatzone-ai --filter @workspace/api-server --parallel run dev",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "ml:sync": "cd ../heatzone-ml && python run_pipeline.py"
   },
   "private": true,
   "devDependencies": {

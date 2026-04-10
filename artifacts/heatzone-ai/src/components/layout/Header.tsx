@@ -2,18 +2,30 @@ import { useState, useRef, useEffect } from "react";
 import { useRefreshWeatherData, useGetCities } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { RefreshCw, Bell, Search, Menu, MapPin } from "lucide-react";
+import { RefreshCw, Bell, Search, Menu, MapPin, Sun, Moon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/hooks/useTheme";
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 6) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
 
 export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { data: cities } = useGetCities();
+  const { theme, toggleTheme } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [themeAnimating, setThemeAnimating] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -38,6 +50,12 @@ export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
     setIsOpen(false);
     navigate(`/city/${cityId}`);
   };
+
+  const handleThemeToggle = () => {
+    setThemeAnimating(true);
+    toggleTheme();
+    setTimeout(() => setThemeAnimating(false), 500);
+  };
   
   const refreshMutation = useRefreshWeatherData({
     mutation: {
@@ -47,7 +65,7 @@ export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
         queryClient.invalidateQueries({ queryKey: ['/api/weather'] });
         
         toast({
-          title: "Data Refreshed",
+          title: "Data Refreshed ✨",
           description: `Successfully updated weather for ${data.citiesUpdated} cities.`,
         });
       },
@@ -62,11 +80,20 @@ export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   });
 
   return (
-    <header className="h-20 bg-background/80 backdrop-blur-xl border-b border-border/50 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 ml-0 md:ml-64">
+    <header className="h-20 bg-background/80 backdrop-blur-xl border-b border-border/50 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 ml-0 md:ml-64 transition-colors duration-300">
       <div className="flex items-center gap-4">
         <button onClick={onToggleSidebar} className="md:hidden p-2 text-muted-foreground hover:text-foreground">
           <Menu className="w-6 h-6" />
         </button>
+
+        {/* Human touch: warm greeting */}
+        <div className="hidden lg:block">
+          <p className="text-sm font-semibold text-foreground">
+            {getGreeting()} <span className="wave-emoji">👋</span>
+          </p>
+          <p className="text-xs text-muted-foreground">Here's your climate overview for today</p>
+        </div>
+
         <div className="hidden sm:block relative" ref={searchRef}>
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
           <input 
@@ -105,13 +132,26 @@ export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 sm:gap-6">
+      <div className="flex items-center gap-3 sm:gap-4">
         <div className="hidden sm:block text-right">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current Time</p>
           <p className="text-sm font-semibold text-foreground">{format(new Date(), 'MMM dd, yyyy • HH:mm')}</p>
         </div>
 
         <div className="h-8 w-px bg-border/50 hidden sm:block"></div>
+
+        {/* 🌙☀️ Day/Night Theme Toggle */}
+        <button 
+          onClick={handleThemeToggle}
+          className="p-2.5 rounded-full bg-secondary/50 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all duration-300 active:scale-90"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? (
+            <Sun className={`w-4 h-4 text-amber-400 ${themeAnimating ? 'theme-rotate' : ''}`} />
+          ) : (
+            <Moon className={`w-4 h-4 text-indigo-500 ${themeAnimating ? 'theme-rotate' : ''}`} />
+          )}
+        </button>
 
         <button 
           onClick={() => refreshMutation.mutate()}
@@ -124,7 +164,7 @@ export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
         
         <button className="p-2 relative text-muted-foreground hover:text-foreground transition-colors bg-secondary/30 rounded-full hover:bg-secondary">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background"></span>
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background live-pulse"></span>
         </button>
       </div>
     </header>

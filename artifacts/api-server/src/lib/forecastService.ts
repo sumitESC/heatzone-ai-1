@@ -4,6 +4,12 @@ import path from "path";
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast";
 
+/** Cities whose OpenWeatherMap name differs from their modern Indian name */
+const API_NAME_ALIASES: Record<string, string> = {
+  Prayagraj: "Allahabad",
+  "Lakhimpur Kheri": "Lakhimpur",
+};
+
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const CSV_FILE = path.join(DATA_DIR, "forecasts.csv");
 
@@ -103,7 +109,8 @@ export async function fetchCityForecast(cityName: string, lat: number, lon: numb
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const url = `${FORECAST_URL}?q=${encodeURIComponent(cityName)},IN&appid=${OPENWEATHER_API_KEY}&units=metric`;
+    const apiName = API_NAME_ALIASES[cityName] ?? cityName;
+    const url = `${FORECAST_URL}?q=${encodeURIComponent(apiName)},IN&appid=${OPENWEATHER_API_KEY}&units=metric`;
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
 
@@ -177,6 +184,8 @@ function simulateForecast(cityName: string): ForecastDay[] {
     Moradabad: 33, Jhansi: 38, Gorakhpur: 34, Ayodhya: 34, Mathura: 37,
     Saharanpur: 33, Muzaffarnagar: 33, Firozabad: 36, Rampur: 34,
     Bijnor: 33, Etawah: 36, "Rae Bareli": 34, Sitapur: 34, Hardoi: 34,
+    Shahjahanpur: 34, "Lakhimpur Kheri": 33, Sultanpur: 34, Banda: 36,
+    Unnao: 35, Bahraich: 33,
   };
   const base = baseTemps[cityName] ?? 33;
   const conditions = ["Clear", "Clouds", "Haze", "Rain", "Mist"];

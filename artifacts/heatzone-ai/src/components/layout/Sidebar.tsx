@@ -35,7 +35,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             alt="HeatZone AI Logo" 
             className="w-8 h-8 object-contain"
           />
-          <span className="font-display font-bold text-xl tracking-tight text-white">HeatZone <span className="text-primary">AI</span></span>
+          <span className="font-display font-bold text-xl tracking-tight text-foreground">HeatZone <span className="text-primary">AI</span></span>
         </div>
         {/* Close button — only visible on mobile */}
         <button 
@@ -122,7 +122,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
       
       <div className="p-4 border-t border-border/50 text-xs text-center text-muted-foreground/60">
-        UP Urban Heat Intelligence<br/>v1.0.0
+        <div className="flex items-center justify-center gap-1.5 mb-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 live-pulse"></span>
+          <span className="text-emerald-400/80 font-medium">Live Monitoring</span>
+        </div>
+        UP Urban Heat Intelligence<br/>v2.0.0
       </div>
     </>
   );

@@ -6,6 +6,8 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seedData": "tsx ./src/seedData.ts",
+    "patchNdvi": "tsx ./src/patchNdvi.ts",
+    "scatter": "tsx ./src/scatterTemp.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

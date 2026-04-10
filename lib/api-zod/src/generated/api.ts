@@ -385,6 +385,9 @@ export const GetDashboardOverviewResponse = zod.object({
   avgHumidity: zod.number(),
   totalVehicles: zod.number(),
   avgGreenCover: zod.number(),
+  avgNDVI: zod.number(),
+  avgNDBI: zod.number(),
+  avgEmissionIndex: zod.number(),
   lastUpdated: zod.string(),
   cityPredictions: zod.array(
     zod.object({

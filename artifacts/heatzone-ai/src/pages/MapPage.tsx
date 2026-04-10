@@ -1,11 +1,18 @@
 import { useState, useMemo } from "react";
-import { useGetAllHeatPredictions } from "@workspace/api-client-react";
+import { useGetAllHeatPredictions, useGetDashboardOverview } from "@workspace/api-client-react";
 import { MapContainer, TileLayer, CircleMarker, Popup, ZoomControl } from "react-leaflet";
 import { Link } from "wouter";
 import { HeatZoneBadge } from "@/components/HeatZoneBadge";
 import { getHeatZoneHex } from "@/lib/utils";
-import { AlertCircle, Loader2, ArrowRight, Satellite, Map as MapIcon, ArrowUpDown, ExternalLink, Thermometer, Droplets, TreePine } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight, Satellite, Map as MapIcon, ArrowUpDown, ExternalLink, Thermometer, Droplets, TreePine, Cloud, Wind } from "lucide-react";
 import { motion } from "framer-motion";
+
+const tempZone = (temp: number): "cool" | "moderate" | "high" | "extreme" => {
+  if (temp < 20) return "cool";
+  if (temp <= 30) return "moderate";
+  if (temp <= 50) return "high";
+  return "extreme";
+};
 
 const TILE_LAYERS = {
   dark: {
@@ -43,10 +50,25 @@ const OVERLAYS = {
   },
 };
 
+const weatherEmoji: Record<string, string> = {
+  Clear: "☀️", Clouds: "☁️", Haze: "🌫️", Rain: "🌧️", Mist: "🌁",
+  Drizzle: "🌦️", Thunderstorm: "⛈️", Snow: "❄️", Smoke: "💨", Dust: "🌪️",
+};
+
 export default function MapPage() {
   const { data: cities, isLoading, error } = useGetAllHeatPredictions();
+  const { data: overview } = useGetDashboardOverview();
   const [tileMode, setTileMode] = useState<"dark" | "satellite">("dark");
   const [overlayMode, setOverlayMode] = useState<"none" | "temperature" | "satellite" | "clouds">("none");
+
+  // Build weather map from overview
+  const cityWeatherMap = useMemo(() => {
+    const m = new Map<number, any>();
+    if (overview && (overview as any).cityWeather) {
+      for (const w of (overview as any).cityWeather) m.set(w.cityId, w);
+    }
+    return m;
+  }, [overview]);
 
   if (isLoading) {
     return (
@@ -74,8 +96,8 @@ export default function MapPage() {
   return (
     <div className="space-y-6">
       <div className="shrink-0">
-        <h1 className="text-3xl font-display font-bold text-white mb-2">Geospatial Analysis</h1>
-        <p className="text-muted-foreground">Interactive map of Uttar Pradesh urban heat islands.</p>
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Geospatial Analysis</h1>
+        <p className="text-muted-foreground">Interactive map of Uttar Pradesh urban heat islands with live weather data.</p>
       </div>
 
       <motion.div
@@ -108,39 +130,60 @@ export default function MapPage() {
           <ZoomControl position="bottomright" />
 
           {cities.map((city) => {
-            const color = getHeatZoneHex(city.heatZone);
+            const mappedZone = tempZone(city.temperature);
+            const color = getHeatZoneHex(mappedZone);
+            const weather = cityWeatherMap.get(city.cityId);
+            const emoji = weather ? (weatherEmoji[weather.weatherMain] || "🌤️") : "";
             return (
               <CircleMarker
                 key={city.cityId}
                 center={[city.latitude, city.longitude]}
-                radius={city.heatRiskScore / 3} // Dynamic radius based on risk
+                radius={city.temperature * 0.85}
                 pathOptions={{
                   color: color,
                   fillColor: color,
-                  fillOpacity: 0.4,
+                  fillOpacity: 0.5,
                   weight: 2,
                 }}
               >
                 <Popup className="custom-popup">
-                  <div className="p-1 min-w-[200px]">
+                  <div className="p-1 min-w-[220px]">
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="font-display font-bold text-lg text-foreground m-0 leading-none">{city.cityName}</h3>
-                      <HeatZoneBadge zone={city.heatZone} showIcon={false} />
+                      <HeatZoneBadge zone={mappedZone} showIcon={false} />
                     </div>
                     
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-1">
-                        <span className="text-muted-foreground">Risk Score</span>
-                        <span className="font-mono font-bold" style={{ color }}>{city.heatRiskScore.toFixed(1)}/100</span>
+                        <span className="text-muted-foreground flex items-center gap-1"><Thermometer className="w-3.5 h-3.5" /> Temp</span>
+                        <span className="font-mono font-bold" style={{ color }}>{city.temperature.toFixed(1)} °C</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm border-b border-border/50 pb-1">
-                        <span className="text-muted-foreground">Temperature</span>
-                        <span className="font-semibold">{city.temperature.toFixed(1)} °C</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Green Cover</span>
-                        <span className="font-semibold">{city.greenCoverRatio.toFixed(1)}%</span>
-                      </div>
+                      {weather && (
+                        <>
+                          <div className="flex justify-between items-center text-sm border-b border-border/50 pb-1">
+                            <span className="text-muted-foreground flex items-center gap-1"><Droplets className="w-3.5 h-3.5" /> Humidity</span>
+                            <span className="font-semibold">{weather.humidity}%</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm border-b border-border/50 pb-1">
+                            <span className="text-muted-foreground flex items-center gap-1"><Wind className="w-3.5 h-3.5" /> Wind</span>
+                            <span className="font-semibold">{weather.windSpeed} m/s</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm border-b border-border/50 pb-1">
+                            <span className="text-muted-foreground flex items-center gap-1"><Cloud className="w-3.5 h-3.5" /> Clouds</span>
+                            <span className="font-semibold">{weather.cloudCover}%</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Condition</span>
+                            <span className="font-semibold capitalize">{emoji} {weather.weatherDescription}</span>
+                          </div>
+                        </>
+                      )}
+                      {!weather && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">Green Cover</span>
+                          <span className="font-semibold">{city.greenCoverRatio.toFixed(1)}%</span>
+                        </div>
+                      )}
                     </div>
 
                     <Link 
@@ -206,10 +249,10 @@ export default function MapPage() {
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Heat Zones</h4>
           <div className="space-y-2">
             {[
-              { label: 'Extreme (>45)', color: 'bg-red-500' },
-              { label: 'High (36-45)', color: 'bg-orange-500' },
-              { label: 'Moderate (26-35)', color: 'bg-lime-400' },
-              { label: 'Cool (<26)', color: 'bg-green-700' }
+              { label: 'Extreme (>50)', color: 'bg-red-500' },
+              { label: 'High (30-50)', color: 'bg-orange-500' },
+              { label: 'Moderate (20-30)', color: 'bg-lime-400' },
+              { label: 'Cool (<20)', color: 'bg-green-700' }
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2 text-sm text-foreground">
                 <span className={`w-3 h-3 rounded-full ${item.color} shadow-[0_0_8px_currentColor]`}></span>
@@ -229,7 +272,7 @@ export default function MapPage() {
       >
         <div className="p-5 border-b border-border/50 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
+            <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
               <Satellite className="w-5 h-5 text-blue-400" />
               Satellite Analysis — City Heat Data
             </h2>
@@ -255,14 +298,15 @@ export default function MapPage() {
             </thead>
             <tbody>
               {[...cities]
-                .sort((a, b) => b.heatRiskScore - a.heatRiskScore)
+                .sort((a, b) => b.temperature - a.temperature)
                 .map((city, i) => {
-                  const color = getHeatZoneHex(city.heatZone);
-                  const riskPct = Math.min(city.heatRiskScore, 100);
+                  const mappedZone = tempZone(city.temperature);
+                  const color = getHeatZoneHex(mappedZone);
+                  const riskPct = Math.min(city.temperature * 2, 100);
                   // Generate a satellite insight based on data
-                  const insight = city.heatZone === 'extreme'
+                  const insight = mappedZone === 'extreme'
                     ? 'LST likely shows intense thermal signature. Verify with 🌡 overlay.'
-                    : city.heatZone === 'high'
+                    : mappedZone === 'high'
                     ? 'Elevated surface temp expected. Check MODIS for built-up density.'
                     : city.greenCoverRatio > 30
                     ? 'Good green cover. MODIS should show vegetation around city.'
@@ -275,7 +319,7 @@ export default function MapPage() {
                     >
                       <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{i + 1}</td>
                       <td className="px-4 py-3 font-semibold text-foreground">{city.cityName}</td>
-                      <td className="px-4 py-3"><HeatZoneBadge zone={city.heatZone} showIcon={false} /></td>
+                      <td className="px-4 py-3"><HeatZoneBadge zone={mappedZone} showIcon={false} /></td>
                       <td className="px-4 py-3 text-center">
                         <span className="font-mono font-bold" style={{ color }}>{city.temperature.toFixed(1)}°C</span>
                       </td>
@@ -288,7 +332,7 @@ export default function MapPage() {
                               style={{ width: `${riskPct}%`, backgroundColor: color }}
                             />
                           </div>
-                          <span className="font-mono text-xs font-bold" style={{ color }}>{city.heatRiskScore.toFixed(0)}</span>
+                          <span className="font-mono text-xs font-bold" style={{ color }}>{city.temperature.toFixed(1)}°</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">

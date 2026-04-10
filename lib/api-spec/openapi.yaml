@@ -545,6 +545,12 @@ components:
           type: integer
         avgGreenCover:
           type: number
+        avgNDVI:
+          type: number
+        avgNDBI:
+          type: number
+        avgEmissionIndex:
+          type: number
         lastUpdated:
           type: string
         cityPredictions:
@@ -562,6 +568,9 @@ components:
         - avgHumidity
         - totalVehicles
         - avgGreenCover
+        - avgNDVI
+        - avgNDBI
+        - avgEmissionIndex
         - lastUpdated
         - cityPredictions
 

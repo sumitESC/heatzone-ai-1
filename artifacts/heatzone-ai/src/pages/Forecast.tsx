@@ -66,11 +66,25 @@ function getTempColor(temp: number) {
   return "#3b82f6";
 }
 
+interface CurrentWeather {
+  temperature: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  pressure: number;
+  cloudCover: number;
+  rainfall: number;
+  weatherMain: string;
+  weatherDescription: string;
+  cityName: string;
+}
+
 export default function Forecast() {
   const { data: cities, isLoading: citiesLoading } = useGetCities();
   const [selectedCityId, setSelectedCityId] = useState<number | "all">("all");
   const [forecastData, setForecastData] = useState<CityForecast | null>(null);
   const [allForecasts, setAllForecasts] = useState<CityForecast[]>([]);
+  const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,12 +113,19 @@ export default function Forecast() {
           const data: CityForecast[] = await r.json();
           setAllForecasts(data);
           setForecastData(null);
+          setCurrentWeather(null);
         } else {
-          const r = await fetch(`/api/forecast/${selectedCityId}`);
-          if (!r.ok) throw new Error(`API error: ${r.status}`);
-          const data: CityForecast = await r.json();
+          const [fRes, wRes] = await Promise.all([
+            fetch(`/api/forecast/${selectedCityId}`),
+            fetch(`/api/weather/current/${selectedCityId}`),
+          ]);
+          if (!fRes.ok) throw new Error(`API error: ${fRes.status}`);
+          const data: CityForecast = await fRes.json();
           setForecastData(data);
           setAllForecasts([]);
+          if (wRes.ok) {
+            setCurrentWeather(await wRes.json());
+          }
         }
       } catch (err: any) {
         console.error("Forecast fetch error:", err);
@@ -129,10 +150,10 @@ export default function Forecast() {
         <div className="relative z-30 w-full">
           <div className="flex items-center gap-3 mb-3">
             <CalendarDays className="w-8 h-8 text-blue-400" />
-            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-white">5-Day Forecast</h1>
+            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground">5-Day Forecast</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl text-sm md:text-base mb-6">
-            Weather forecast analysis powered by OpenWeather API for all monitored Uttar Pradesh cities.
+            Weather forecast analysis for all monitored Uttar Pradesh cities.
           </p>
 
           <div className="relative max-w-[280px]" ref={dropdownRef}>
@@ -211,6 +232,11 @@ export default function Forecast() {
             Retry
           </button>
         </div>
+      )}
+
+      {/* Current weather banner for single city */}
+      {!loading && !error && currentWeather && forecastData && (
+        <CurrentWeatherBanner weather={currentWeather} />
       )}
 
       {/* Single city forecast */}
@@ -447,7 +473,7 @@ function AllCitiesComparison({ data }: { data: CityForecast[] }) {
       >
         <h3 className="font-bold text-lg mb-1">🏆 5-Day Temperature Ranking</h3>
         <p className="text-xs text-muted-foreground mb-4">Average max temperature across the forecast period</p>
-        <div className="h-[400px] w-full">
+        <div className="h-[650px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={cityAvgs} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
@@ -498,6 +524,75 @@ function AllCitiesComparison({ data }: { data: CityForecast[] }) {
           </ResponsiveContainer>
         </div>
       </motion.div>
+    </motion.div>
+  );
+}
+
+const weatherEmoji: Record<string, string> = {
+  Clear: "☀️", Clouds: "☁️", Haze: "🌫️", Rain: "🌧️", Mist: "🌁",
+  Drizzle: "🌦️", Thunderstorm: "⛈️", Snow: "❄️", Smoke: "💨", Dust: "🌪️",
+};
+
+function CurrentWeatherBanner({ weather }: { weather: CurrentWeather }) {
+  const emoji = weatherEmoji[weather.weatherMain] || "🌤️";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-card border border-border/50 rounded-2xl p-5 shadow-lg relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 rounded-bl-[100px] pointer-events-none" />
+      <div className="flex items-center gap-2 mb-4">
+        <Cloud className="w-5 h-5 text-sky-400" />
+        <h3 className="font-bold text-base">Current Conditions — {weather.cityName}</h3>
+        <span className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md border border-emerald-400/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          LIVE
+        </span>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className="flex flex-col items-center gap-1 text-center">
+          <span className="text-xl">{emoji}</span>
+          <span className="text-[10px] text-muted-foreground">Condition</span>
+          <span className="text-xs font-bold capitalize">{weather.weatherDescription}</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Thermometer className="w-5 h-5 text-red-400" />
+          <span className="text-[10px] text-muted-foreground">Temp</span>
+          <span className="text-xs font-bold font-mono">{weather.temperature.toFixed(1)}°C</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Thermometer className="w-5 h-5 text-orange-400" />
+          <span className="text-[10px] text-muted-foreground">Feels Like</span>
+          <span className="text-xs font-bold font-mono">{weather.feelsLike.toFixed(1)}°C</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Droplets className="w-5 h-5 text-blue-400" />
+          <span className="text-[10px] text-muted-foreground">Humidity</span>
+          <span className="text-xs font-bold font-mono">{weather.humidity}%</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Wind className="w-5 h-5 text-sky-400" />
+          <span className="text-[10px] text-muted-foreground">Wind</span>
+          <span className="text-xs font-bold font-mono">{weather.windSpeed} m/s</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Cloud className="w-5 h-5 text-slate-400" />
+          <span className="text-[10px] text-muted-foreground">Clouds</span>
+          <span className="text-xs font-bold font-mono">{weather.cloudCover}%</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <CloudRain className="w-5 h-5 text-cyan-400" />
+          <span className="text-[10px] text-muted-foreground">Rainfall</span>
+          <span className="text-xs font-bold font-mono">{weather.rainfall} mm</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Sun className="w-5 h-5 text-amber-400" />
+          <span className="text-[10px] text-muted-foreground">Pressure</span>
+          <span className="text-xs font-bold font-mono">{weather.pressure} hPa</span>
+        </div>
+      </div>
     </motion.div>
   );
 }

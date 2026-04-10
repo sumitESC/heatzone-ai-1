@@ -47,9 +47,9 @@ export function computeHeatRisk(
   const heatRiskScore = Math.min(100, Math.max(0, Math.round(score * 10) / 10));
 
   let heatZone: "cool" | "moderate" | "high" | "extreme";
-  if (temperature < 26) heatZone = "cool";
-  else if (temperature <= 35) heatZone = "moderate";
-  else if (temperature <= 45) heatZone = "high";
+  if (temperature < 20) heatZone = "cool";
+  else if (temperature <= 30) heatZone = "moderate";
+  else if (temperature <= 50) heatZone = "high";
   else heatZone = "extreme";
 
   return {

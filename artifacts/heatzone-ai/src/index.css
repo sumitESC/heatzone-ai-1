@@ -47,8 +47,10 @@
   --color-chart-5: hsl(45 93% 47%);
 }
 
-:root {
-  /* Dark Data Dashboard Theme as Default */
+/* ═══════════════════════════════════════════════════════════
+   DARK THEME (default)
+   ═══════════════════════════════════════════════════════════ */
+:root, .dark {
   --background: 226 47% 6%;
   --foreground: 210 40% 98%;
   
@@ -78,6 +80,43 @@
   --ring: 15 90% 55%;
 
   --radius: 0.75rem;
+
+  --heading-color: 210 40% 98%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT THEME — warm, clean, human
+   ═══════════════════════════════════════════════════════════ */
+.light {
+  --background: 40 33% 97%;
+  --foreground: 226 47% 12%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 226 47% 12%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 226 47% 12%;
+  
+  --primary: 15 85% 50%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 40 20% 92%;
+  --secondary-foreground: 226 40% 20%;
+  
+  --muted: 40 15% 90%;
+  --muted-foreground: 226 15% 45%;
+  
+  --accent: 40 20% 88%;
+  --accent-foreground: 226 40% 15%;
+  
+  --destructive: 0 84% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 40 15% 85%;
+  --input: 40 15% 85%;
+  --ring: 15 85% 50%;
+
+  --heading-color: 226 47% 12%;
 }
 
 @layer base {
@@ -86,18 +125,33 @@
   }
   body {
     @apply bg-background text-foreground antialiased font-sans;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+
+  /* Dark mode subtle gradient overlays */
+  .dark body {
     background-image: 
       radial-gradient(circle at 100% 0%, hsla(15, 90%, 55%, 0.08) 0%, transparent 40%),
       radial-gradient(circle at 0% 100%, hsla(200, 90%, 60%, 0.05) 0%, transparent 40%);
     background-attachment: fixed;
   }
+
+  /* Light mode subtle warm gradient */
+  .light body {
+    background-image: 
+      radial-gradient(circle at 100% 0%, hsla(15, 85%, 55%, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, hsla(35, 90%, 60%, 0.04) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    @apply font-bold tracking-tight text-white;
+    @apply font-bold tracking-tight;
+    color: hsl(var(--heading-color));
   }
 }
 
-/* Custom Scrollbar for sleek dark look */
+/* Custom Scrollbar — adapts to theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -117,6 +171,11 @@
 .recharts-tooltip-cursor {
   fill: hsla(226, 30%, 16%, 0.5) !important;
 }
+.light .recharts-tooltip-cursor {
+  fill: hsla(226, 30%, 85%, 0.5) !important;
+}
+
+/* Leaflet Map — theme-aware popups */
 .leaflet-container {
   font-family: var(--font-sans);
   z-index: 10;
@@ -128,8 +187,67 @@
   border: 1px solid hsl(var(--border));
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
+.light .leaflet-popup-content-wrapper {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
 .leaflet-popup-tip {
   background: hsl(var(--card)) !important;
   border-top: 1px solid hsl(var(--border));
   border-left: 1px solid hsl(var(--border));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HUMAN TOUCH — micro-animations, warmth, life
+   ═══════════════════════════════════════════════════════════ */
+
+/* Gentle breathing glow on primary accent elements */
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.breathe-glow {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* Smooth card hover lift */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Greeting wave animation */
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-8deg); }
+  45% { transform: rotate(14deg); }
+  60% { transform: rotate(-4deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.wave-emoji {
+  display: inline-block;
+  animation: wave 2.5s ease-in-out 1;
+  transform-origin: 70% 70%;
+}
+
+/* Status pulse for live indicators */
+@keyframes status-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 0.4; }
+}
+
+.live-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Theme toggle icon spin */
+@keyframes theme-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.theme-rotate {
+  animation: theme-spin 0.5s ease-out;
 }

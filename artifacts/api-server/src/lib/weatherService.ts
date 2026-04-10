@@ -1,6 +1,12 @@
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
 
+/** Cities whose OpenWeatherMap name differs from their modern Indian name */
+const API_NAME_ALIASES: Record<string, string> = {
+  Prayagraj: "Allahabad",
+  "Lakhimpur Kheri": "Lakhimpur",
+};
+
 export interface OpenWeatherResponse {
   main: {
     temp: number;
@@ -31,7 +37,8 @@ export async function fetchCityWeather(cityName: string): Promise<{
   }
 
   try {
-    const url = `${BASE_URL}?q=${encodeURIComponent(cityName)},IN&appid=${OPENWEATHER_API_KEY}&units=metric`;
+    const apiName = API_NAME_ALIASES[cityName] ?? cityName;
+    const url = `${BASE_URL}?q=${encodeURIComponent(apiName)},IN&appid=${OPENWEATHER_API_KEY}&units=metric`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -77,6 +84,12 @@ function simulateWeather(cityName: string): {
     Agra: 36,
     Ghaziabad: 35,
     Noida: 34,
+    Shahjahanpur: 34,
+    "Lakhimpur Kheri": 33,
+    Sultanpur: 34,
+    Banda: 36,
+    Unnao: 35,
+    Bahraich: 33,
   };
   const base = baseTemps[cityName] ?? 33;
   const temp = base + (Math.random() * 4 - 2);

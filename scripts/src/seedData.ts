@@ -17,7 +17,7 @@ const UP_CITIES = [
     forestCover: 8.2,
     urbanGreenSpace: 12.5,
     treeDensity: 45,
-    ndvi: 0.28,
+    ndvi: 0.28, ndbi: 0.22, emissionIndex: 3.25,
     totalVehicles: 2850000,
     petrolVehicles: 1600000,
     dieselVehicles: 820000,
@@ -40,7 +40,7 @@ const UP_CITIES = [
     forestCover: 5.4,
     urbanGreenSpace: 7.2,
     treeDensity: 28,
-    ndvi: 0.19,
+    ndvi: 0.19, ndbi: 0.10, emissionIndex: 2.52,
     totalVehicles: 2650000,
     petrolVehicles: 1480000,
     dieselVehicles: 910000,
@@ -63,7 +63,7 @@ const UP_CITIES = [
     forestCover: 9.1,
     urbanGreenSpace: 11.8,
     treeDensity: 52,
-    ndvi: 0.31,
+    ndvi: 0.31, ndbi: 0.11, emissionIndex: 1.58,
     totalVehicles: 1380000,
     petrolVehicles: 750000,
     dieselVehicles: 430000,
@@ -86,7 +86,7 @@ const UP_CITIES = [
     forestCover: 10.3,
     urbanGreenSpace: 13.1,
     treeDensity: 58,
-    ndvi: 0.33,
+    ndvi: 0.33, ndbi: 0.17, emissionIndex: 4.55,
     totalVehicles: 1520000,
     petrolVehicles: 830000,
     dieselVehicles: 490000,
@@ -109,7 +109,7 @@ const UP_CITIES = [
     forestCover: 6.2,
     urbanGreenSpace: 9.4,
     treeDensity: 38,
-    ndvi: 0.22,
+    ndvi: 0.22, ndbi: 0.29, emissionIndex: 4.66,
     totalVehicles: 1680000,
     petrolVehicles: 940000,
     dieselVehicles: 520000,
@@ -132,7 +132,7 @@ const UP_CITIES = [
     forestCover: 3.8,
     urbanGreenSpace: 5.6,
     treeDensity: 18,
-    ndvi: 0.14,
+    ndvi: 0.14, ndbi: 0.12, emissionIndex: 2.23,
     totalVehicles: 2980000,
     petrolVehicles: 1680000,
     dieselVehicles: 870000,
@@ -155,7 +155,7 @@ const UP_CITIES = [
     forestCover: 7.5,
     urbanGreenSpace: 14.2,
     treeDensity: 62,
-    ndvi: 0.35,
+    ndvi: 0.35, ndbi: 0.29, emissionIndex: 4.32,
     totalVehicles: 1920000,
     petrolVehicles: 1050000,
     dieselVehicles: 560000,
@@ -163,55 +163,73 @@ const UP_CITIES = [
     cngVehicles: 125000,
   },
   {
-    name: "Meerut", latitude: 28.9845, longitude: 77.7064, population: 1305429, populationDensity: 3200, totalArea: 408, builtUpArea: 250, industrialArea: 60, residentialArea: 150, roadArea: 35, openLand: 80, waterBodiesArea: 12, forestCover: 4.5, urbanGreenSpace: 8.2, treeDensity: 25, ndvi: 0.18, totalVehicles: 850000, petrolVehicles: 480000, dieselVehicles: 280000, electricVehicles: 30000, cngVehicles: 60000,
+    name: "Meerut", latitude: 28.9845, longitude: 77.7064, population: 1305429, populationDensity: 3200, totalArea: 408, builtUpArea: 250, industrialArea: 60, residentialArea: 150, roadArea: 35, openLand: 80, waterBodiesArea: 12, forestCover: 4.5, urbanGreenSpace: 8.2, treeDensity: 25, ndvi: 0.18, ndbi: 0.16, emissionIndex: 4.11, totalVehicles: 850000, petrolVehicles: 480000, dieselVehicles: 280000, electricVehicles: 30000, cngVehicles: 60000,
   },
   {
-    name: "Bareilly", latitude: 28.3670, longitude: 79.4304, population: 904797, populationDensity: 2100, totalArea: 235, builtUpArea: 140, industrialArea: 40, residentialArea: 80, roadArea: 20, openLand: 60, waterBodiesArea: 8, forestCover: 5.1, urbanGreenSpace: 7.5, treeDensity: 22, ndvi: 0.20, totalVehicles: 550000, petrolVehicles: 320000, dieselVehicles: 180000, electricVehicles: 15000, cngVehicles: 35000,
+    name: "Bareilly", latitude: 28.3670, longitude: 79.4304, population: 904797, populationDensity: 2100, totalArea: 235, builtUpArea: 140, industrialArea: 40, residentialArea: 80, roadArea: 20, openLand: 60, waterBodiesArea: 8, forestCover: 5.1, urbanGreenSpace: 7.5, treeDensity: 22, ndvi: 0.20, ndbi: 0.27, emissionIndex: 3.18, totalVehicles: 550000, petrolVehicles: 320000, dieselVehicles: 180000, electricVehicles: 15000, cngVehicles: 35000,
   },
   {
-    name: "Aligarh", latitude: 27.8974, longitude: 78.0880, population: 874408, populationDensity: 2400, totalArea: 345, builtUpArea: 180, industrialArea: 50, residentialArea: 100, roadArea: 25, openLand: 95, waterBodiesArea: 10, forestCover: 4.8, urbanGreenSpace: 6.9, treeDensity: 20, ndvi: 0.17, totalVehicles: 520000, petrolVehicles: 310000, dieselVehicles: 160000, electricVehicles: 12000, cngVehicles: 38000,
+    name: "Aligarh", latitude: 27.8974, longitude: 78.0880, population: 874408, populationDensity: 2400, totalArea: 345, builtUpArea: 180, industrialArea: 50, residentialArea: 100, roadArea: 25, openLand: 95, waterBodiesArea: 10, forestCover: 4.8, urbanGreenSpace: 6.9, treeDensity: 20, ndvi: 0.17, ndbi: 0.23, emissionIndex: 3.16, totalVehicles: 520000, petrolVehicles: 310000, dieselVehicles: 160000, electricVehicles: 12000, cngVehicles: 38000,
   },
   {
-    name: "Moradabad", latitude: 28.8386, longitude: 78.7733, population: 887871, populationDensity: 2600, totalArea: 349, builtUpArea: 200, industrialArea: 45, residentialArea: 120, roadArea: 22, openLand: 85, waterBodiesArea: 15, forestCover: 3.5, urbanGreenSpace: 5.5, treeDensity: 15, ndvi: 0.15, totalVehicles: 490000, petrolVehicles: 280000, dieselVehicles: 170000, electricVehicles: 10000, cngVehicles: 30000,
+    name: "Moradabad", latitude: 28.8386, longitude: 78.7733, population: 887871, populationDensity: 2600, totalArea: 349, builtUpArea: 200, industrialArea: 45, residentialArea: 120, roadArea: 22, openLand: 85, waterBodiesArea: 15, forestCover: 3.5, urbanGreenSpace: 5.5, treeDensity: 15, ndvi: 0.15, ndbi: 0.27, emissionIndex: 1.27, totalVehicles: 490000, petrolVehicles: 280000, dieselVehicles: 170000, electricVehicles: 10000, cngVehicles: 30000,
   },
   {
-    name: "Jhansi", latitude: 25.4484, longitude: 78.5685, population: 505693, populationDensity: 1500, totalArea: 315, builtUpArea: 120, industrialArea: 30, residentialArea: 70, roadArea: 18, openLand: 130, waterBodiesArea: 25, forestCover: 8.5, urbanGreenSpace: 10.2, treeDensity: 35, ndvi: 0.25, totalVehicles: 350000, petrolVehicles: 210000, dieselVehicles: 110000, electricVehicles: 8000, cngVehicles: 22000,
+    name: "Jhansi", latitude: 25.4484, longitude: 78.5685, population: 505693, populationDensity: 1500, totalArea: 315, builtUpArea: 120, industrialArea: 30, residentialArea: 70, roadArea: 18, openLand: 130, waterBodiesArea: 25, forestCover: 8.5, urbanGreenSpace: 10.2, treeDensity: 35, ndvi: 0.25, ndbi: 0.16, emissionIndex: 1.18, totalVehicles: 350000, petrolVehicles: 210000, dieselVehicles: 110000, electricVehicles: 8000, cngVehicles: 22000,
   },
   {
-    name: "Gorakhpur", latitude: 26.7606, longitude: 83.3732, population: 673446, populationDensity: 1800, totalArea: 350, builtUpArea: 160, industrialArea: 25, residentialArea: 110, roadArea: 20, openLand: 120, waterBodiesArea: 40, forestCover: 6.5, urbanGreenSpace: 8.5, treeDensity: 28, ndvi: 0.22, totalVehicles: 420000, petrolVehicles: 250000, dieselVehicles: 140000, electricVehicles: 9000, cngVehicles: 21000,
+    name: "Gorakhpur", latitude: 26.7606, longitude: 83.3732, population: 673446, populationDensity: 1800, totalArea: 350, builtUpArea: 160, industrialArea: 25, residentialArea: 110, roadArea: 20, openLand: 120, waterBodiesArea: 40, forestCover: 6.5, urbanGreenSpace: 8.5, treeDensity: 28, ndvi: 0.22, ndbi: 0.22, emissionIndex: 3.85, totalVehicles: 420000, petrolVehicles: 250000, dieselVehicles: 140000, electricVehicles: 9000, cngVehicles: 21000,
   },
   {
-    name: "Ayodhya", latitude: 26.7922, longitude: 82.1998, population: 350000, populationDensity: 1200, totalArea: 250, builtUpArea: 90, industrialArea: 10, residentialArea: 60, roadArea: 15, openLand: 100, waterBodiesArea: 35, forestCover: 9.0, urbanGreenSpace: 12.0, treeDensity: 40, ndvi: 0.28, totalVehicles: 200000, petrolVehicles: 120000, dieselVehicles: 60000, electricVehicles: 15000, cngVehicles: 5000,
+    name: "Ayodhya", latitude: 26.7922, longitude: 82.1998, population: 350000, populationDensity: 1200, totalArea: 250, builtUpArea: 90, industrialArea: 10, residentialArea: 60, roadArea: 15, openLand: 100, waterBodiesArea: 35, forestCover: 9.0, urbanGreenSpace: 12.0, treeDensity: 40, ndvi: 0.28, ndbi: 0.11, emissionIndex: 2.19, totalVehicles: 200000, petrolVehicles: 120000, dieselVehicles: 60000, electricVehicles: 15000, cngVehicles: 5000,
   },
   {
-    name: "Mathura", latitude: 27.4924, longitude: 77.6737, population: 456706, populationDensity: 1900, totalArea: 280, builtUpArea: 130, industrialArea: 35, residentialArea: 75, roadArea: 18, openLand: 110, waterBodiesArea: 20, forestCover: 5.5, urbanGreenSpace: 7.2, treeDensity: 22, ndvi: 0.19, totalVehicles: 310000, petrolVehicles: 190000, dieselVehicles: 100000, electricVehicles: 5000, cngVehicles: 15000,
+    name: "Mathura", latitude: 27.4924, longitude: 77.6737, population: 456706, populationDensity: 1900, totalArea: 280, builtUpArea: 130, industrialArea: 35, residentialArea: 75, roadArea: 18, openLand: 110, waterBodiesArea: 20, forestCover: 5.5, urbanGreenSpace: 7.2, treeDensity: 22, ndvi: 0.19, ndbi: 0.17, emissionIndex: 2.92, totalVehicles: 310000, petrolVehicles: 190000, dieselVehicles: 100000, electricVehicles: 5000, cngVehicles: 15000,
   },
   {
-    name: "Saharanpur", latitude: 29.9640, longitude: 77.5460, population: 705478, populationDensity: 2200, totalArea: 320, builtUpArea: 150, industrialArea: 40, residentialArea: 90, roadArea: 22, openLand: 120, waterBodiesArea: 12, forestCover: 6.8, urbanGreenSpace: 8.4, treeDensity: 26, ndvi: 0.21, totalVehicles: 410000, petrolVehicles: 240000, dieselVehicles: 130000, electricVehicles: 8000, cngVehicles: 32000,
+    name: "Saharanpur", latitude: 29.9640, longitude: 77.5460, population: 705478, populationDensity: 2200, totalArea: 320, builtUpArea: 150, industrialArea: 40, residentialArea: 90, roadArea: 22, openLand: 120, waterBodiesArea: 12, forestCover: 6.8, urbanGreenSpace: 8.4, treeDensity: 26, ndvi: 0.21, ndbi: 0.11, emissionIndex: 3.58, totalVehicles: 410000, petrolVehicles: 240000, dieselVehicles: 130000, electricVehicles: 8000, cngVehicles: 32000,
   },
   {
-    name: "Muzaffarnagar", latitude: 29.4727, longitude: 77.7085, population: 495000, populationDensity: 1900, totalArea: 250, builtUpArea: 110, industrialArea: 30, residentialArea: 65, roadArea: 15, openLand: 90, waterBodiesArea: 8, forestCover: 4.2, urbanGreenSpace: 6.0, treeDensity: 18, ndvi: 0.16, totalVehicles: 280000, petrolVehicles: 170000, dieselVehicles: 90000, electricVehicles: 5000, cngVehicles: 15000,
+    name: "Muzaffarnagar", latitude: 29.4727, longitude: 77.7085, population: 495000, populationDensity: 1900, totalArea: 250, builtUpArea: 110, industrialArea: 30, residentialArea: 65, roadArea: 15, openLand: 90, waterBodiesArea: 8, forestCover: 4.2, urbanGreenSpace: 6.0, treeDensity: 18, ndvi: 0.16, ndbi: 0.17, emissionIndex: 4.27, totalVehicles: 280000, petrolVehicles: 170000, dieselVehicles: 90000, electricVehicles: 5000, cngVehicles: 15000,
   },
   {
-    name: "Firozabad", latitude: 27.1590, longitude: 78.3957, population: 604214, populationDensity: 2500, totalArea: 240, builtUpArea: 130, industrialArea: 45, residentialArea: 70, roadArea: 18, openLand: 75, waterBodiesArea: 6, forestCover: 3.8, urbanGreenSpace: 5.2, treeDensity: 15, ndvi: 0.14, totalVehicles: 320000, petrolVehicles: 190000, dieselVehicles: 110000, electricVehicles: 4000, cngVehicles: 16000,
+    name: "Firozabad", latitude: 27.1590, longitude: 78.3957, population: 604214, populationDensity: 2500, totalArea: 240, builtUpArea: 130, industrialArea: 45, residentialArea: 70, roadArea: 18, openLand: 75, waterBodiesArea: 6, forestCover: 3.8, urbanGreenSpace: 5.2, treeDensity: 15, ndvi: 0.14, ndbi: 0.19, emissionIndex: 3.53, totalVehicles: 320000, petrolVehicles: 190000, dieselVehicles: 110000, electricVehicles: 4000, cngVehicles: 16000,
   },
   {
-    name: "Rampur", latitude: 28.8154, longitude: 79.0253, population: 325248, populationDensity: 1600, totalArea: 200, builtUpArea: 85, industrialArea: 20, residentialArea: 55, roadArea: 12, openLand: 80, waterBodiesArea: 10, forestCover: 5.0, urbanGreenSpace: 7.0, treeDensity: 20, ndvi: 0.18, totalVehicles: 180000, petrolVehicles: 110000, dieselVehicles: 60000, electricVehicles: 3000, cngVehicles: 7000,
+    name: "Rampur", latitude: 28.8154, longitude: 79.0253, population: 325248, populationDensity: 1600, totalArea: 200, builtUpArea: 85, industrialArea: 20, residentialArea: 55, roadArea: 12, openLand: 80, waterBodiesArea: 10, forestCover: 5.0, urbanGreenSpace: 7.0, treeDensity: 20, ndvi: 0.18, ndbi: 0.23, emissionIndex: 1.34, totalVehicles: 180000, petrolVehicles: 110000, dieselVehicles: 60000, electricVehicles: 3000, cngVehicles: 7000,
   },
   {
-    name: "Bijnor", latitude: 29.3724, longitude: 78.1358, population: 115000, populationDensity: 1300, totalArea: 120, builtUpArea: 40, industrialArea: 10, residentialArea: 25, roadArea: 8, openLand: 55, waterBodiesArea: 8, forestCover: 7.5, urbanGreenSpace: 9.0, treeDensity: 30, ndvi: 0.24, totalVehicles: 80000, petrolVehicles: 50000, dieselVehicles: 25000, electricVehicles: 2000, cngVehicles: 3000,
+    name: "Bijnor", latitude: 29.3724, longitude: 78.1358, population: 115000, populationDensity: 1300, totalArea: 120, builtUpArea: 40, industrialArea: 10, residentialArea: 25, roadArea: 8, openLand: 55, waterBodiesArea: 8, forestCover: 7.5, urbanGreenSpace: 9.0, treeDensity: 30, ndvi: 0.24, ndbi: 0.12, emissionIndex: 2.72, totalVehicles: 80000, petrolVehicles: 50000, dieselVehicles: 25000, electricVehicles: 2000, cngVehicles: 3000,
   },
   {
-    name: "Etawah", latitude: 26.7658, longitude: 79.0150, population: 256838, populationDensity: 1400, totalArea: 180, builtUpArea: 75, industrialArea: 15, residentialArea: 50, roadArea: 12, openLand: 70, waterBodiesArea: 15, forestCover: 6.2, urbanGreenSpace: 8.5, treeDensity: 26, ndvi: 0.22, totalVehicles: 140000, petrolVehicles: 85000, dieselVehicles: 45000, electricVehicles: 3000, cngVehicles: 7000,
+    name: "Etawah", latitude: 26.7658, longitude: 79.0150, population: 256838, populationDensity: 1400, totalArea: 180, builtUpArea: 75, industrialArea: 15, residentialArea: 50, roadArea: 12, openLand: 70, waterBodiesArea: 15, forestCover: 6.2, urbanGreenSpace: 8.5, treeDensity: 26, ndvi: 0.22, ndbi: 0.28, emissionIndex: 2.99, totalVehicles: 140000, petrolVehicles: 85000, dieselVehicles: 45000, electricVehicles: 3000, cngVehicles: 7000,
   },
   {
-    name: "Rae Bareli", latitude: 26.2306, longitude: 81.2404, population: 191316, populationDensity: 1200, totalArea: 150, builtUpArea: 60, industrialArea: 15, residentialArea: 35, roadArea: 10, openLand: 65, waterBodiesArea: 8, forestCover: 5.8, urbanGreenSpace: 7.8, treeDensity: 24, ndvi: 0.20, totalVehicles: 110000, petrolVehicles: 65000, dieselVehicles: 35000, electricVehicles: 2000, cngVehicles: 8000,
+    name: "Rae Bareli", latitude: 26.2306, longitude: 81.2404, population: 191316, populationDensity: 1200, totalArea: 150, builtUpArea: 60, industrialArea: 15, residentialArea: 35, roadArea: 10, openLand: 65, waterBodiesArea: 8, forestCover: 5.8, urbanGreenSpace: 7.8, treeDensity: 24, ndvi: 0.20, ndbi: 0.20, emissionIndex: 1.25, totalVehicles: 110000, petrolVehicles: 65000, dieselVehicles: 35000, electricVehicles: 2000, cngVehicles: 8000,
   },
   {
-    name: "Sitapur", latitude: 27.5684, longitude: 80.6789, population: 177234, populationDensity: 1100, totalArea: 160, builtUpArea: 55, industrialArea: 10, residentialArea: 35, roadArea: 10, openLand: 75, waterBodiesArea: 12, forestCover: 6.5, urbanGreenSpace: 8.0, treeDensity: 25, ndvi: 0.21, totalVehicles: 95000, petrolVehicles: 55000, dieselVehicles: 30000, electricVehicles: 2000, cngVehicles: 8000,
+    name: "Sitapur", latitude: 27.5684, longitude: 80.6789, population: 177234, populationDensity: 1100, totalArea: 160, builtUpArea: 55, industrialArea: 10, residentialArea: 35, roadArea: 10, openLand: 75, waterBodiesArea: 12, forestCover: 6.5, urbanGreenSpace: 8.0, treeDensity: 25, ndvi: 0.21, ndbi: 0.16, emissionIndex: 4.02, totalVehicles: 95000, petrolVehicles: 55000, dieselVehicles: 30000, electricVehicles: 2000, cngVehicles: 8000,
   },
   {
-    name: "Hardoi", latitude: 27.3986, longitude: 80.1260, population: 197046, populationDensity: 1300, totalArea: 170, builtUpArea: 65, industrialArea: 12, residentialArea: 40, roadArea: 11, openLand: 70, waterBodiesArea: 10, forestCover: 5.5, urbanGreenSpace: 7.5, treeDensity: 22, ndvi: 0.19, totalVehicles: 105000, petrolVehicles: 60000, dieselVehicles: 35000, electricVehicles: 2000, cngVehicles: 8000,
+    name: "Hardoi", latitude: 27.3986, longitude: 80.1260, population: 197046, populationDensity: 1300, totalArea: 170, builtUpArea: 65, industrialArea: 12, residentialArea: 40, roadArea: 11, openLand: 70, waterBodiesArea: 10, forestCover: 5.5, urbanGreenSpace: 7.5, treeDensity: 22, ndvi: 0.19, ndbi: 0.17, emissionIndex: 3.01, totalVehicles: 105000, petrolVehicles: 60000, dieselVehicles: 35000, electricVehicles: 2000, cngVehicles: 8000,
+  },
+  {
+    name: "Shahjahanpur", latitude: 27.8836, longitude: 79.9108, population: 361974, populationDensity: 1700, totalArea: 210, builtUpArea: 95, industrialArea: 20, residentialArea: 60, roadArea: 14, openLand: 85, waterBodiesArea: 12, forestCover: 5.8, urbanGreenSpace: 7.0, treeDensity: 22, ndvi: 0.20, ndbi: 0.19, emissionIndex: 2.85, totalVehicles: 210000, petrolVehicles: 125000, dieselVehicles: 68000, electricVehicles: 5000, cngVehicles: 12000,
+  },
+  {
+    name: "Lakhimpur Kheri", latitude: 27.9462, longitude: 80.7792, population: 151993, populationDensity: 950, totalArea: 195, builtUpArea: 58, industrialArea: 8, residentialArea: 38, roadArea: 10, openLand: 100, waterBodiesArea: 22, forestCover: 9.5, urbanGreenSpace: 11.0, treeDensity: 42, ndvi: 0.32, ndbi: 0.10, emissionIndex: 1.45, totalVehicles: 85000, petrolVehicles: 48000, dieselVehicles: 30000, electricVehicles: 2000, cngVehicles: 5000,
+  },
+  {
+    name: "Sultanpur", latitude: 26.2656, longitude: 82.0722, population: 114382, populationDensity: 1050, totalArea: 130, builtUpArea: 45, industrialArea: 8, residentialArea: 28, roadArea: 8, openLand: 58, waterBodiesArea: 14, forestCover: 6.2, urbanGreenSpace: 8.5, treeDensity: 28, ndvi: 0.23, ndbi: 0.14, emissionIndex: 1.82, totalVehicles: 65000, petrolVehicles: 38000, dieselVehicles: 22000, electricVehicles: 1500, cngVehicles: 3500,
+  },
+  {
+    name: "Banda", latitude: 25.4756, longitude: 80.3370, population: 180000, populationDensity: 1150, totalArea: 155, builtUpArea: 52, industrialArea: 10, residentialArea: 32, roadArea: 9, openLand: 72, waterBodiesArea: 18, forestCover: 7.8, urbanGreenSpace: 9.2, treeDensity: 32, ndvi: 0.26, ndbi: 0.13, emissionIndex: 1.95, totalVehicles: 95000, petrolVehicles: 55000, dieselVehicles: 32000, electricVehicles: 2500, cngVehicles: 5500,
+  },
+  {
+    name: "Unnao", latitude: 26.5393, longitude: 80.4878, population: 180473, populationDensity: 1200, totalArea: 150, builtUpArea: 55, industrialArea: 15, residentialArea: 30, roadArea: 10, openLand: 62, waterBodiesArea: 10, forestCover: 5.0, urbanGreenSpace: 6.8, treeDensity: 20, ndvi: 0.17, ndbi: 0.21, emissionIndex: 3.40, totalVehicles: 110000, petrolVehicles: 65000, dieselVehicles: 38000, electricVehicles: 2000, cngVehicles: 5000,
+  },
+  {
+    name: "Bahraich", latitude: 27.5745, longitude: 81.5959, population: 187080, populationDensity: 1050, totalArea: 175, builtUpArea: 50, industrialArea: 7, residentialArea: 32, roadArea: 9, openLand: 90, waterBodiesArea: 20, forestCover: 10.5, urbanGreenSpace: 12.0, treeDensity: 48, ndvi: 0.34, ndbi: 0.09, emissionIndex: 1.20, totalVehicles: 75000, petrolVehicles: 42000, dieselVehicles: 28000, electricVehicles: 1500, cngVehicles: 3500,
   }
 ];
 
@@ -240,6 +258,12 @@ const WEATHER_BASE: Record<string, { temp: number; humidity: number; wind: numbe
   "Rae Bareli": { temp: 34.8, humidity: 65, wind: 4.0 },
   Sitapur:    { temp: 34.0, humidity: 70, wind: 3.8 },
   Hardoi:     { temp: 34.5, humidity: 68, wind: 4.1 },
+  Shahjahanpur: { temp: 34.2, humidity: 66, wind: 3.9 },
+  "Lakhimpur Kheri": { temp: 33.5, humidity: 72, wind: 3.4 },
+  Sultanpur:  { temp: 34.0, humidity: 70, wind: 3.6 },
+  Banda:      { temp: 36.0, humidity: 58, wind: 4.5 },
+  Unnao:      { temp: 34.8, humidity: 67, wind: 3.8 },
+  Bahraich:   { temp: 33.2, humidity: 74, wind: 3.2 },
 };
 
 function computeHeatScore(city: typeof UP_CITIES[0], temp: number, humidity: number, wind: number): {

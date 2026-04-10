@@ -16,6 +16,17 @@ export const heatPredictionsTable = sqliteTable("heat_predictions", {
   builtUpRatio: real("built_up_ratio").notNull(),
   coolingIndex: real("cooling_index").notNull(),
   trafficHeatFactor: real("traffic_heat_factor").notNull(),
+  ndvi: real("ndvi").notNull().default(0),
+  ndwi: real("ndwi").notNull().default(0),
+  ndbi: real("ndbi").notNull().default(0),
+  emissionIndex: real("emission_index").notNull().default(0),
+  primaryRiskDriver: text("primary_risk_driver"),
+  riskExplanation: text("risk_explanation"),
+  avgBuildingHeight: real("avg_building_height").notNull().default(10),
+  urbanCanyonIndex: real("urban_canyon_index").notNull().default(0.2),
+  industrialHeatFactor: real("industrial_heat_factor").notNull().default(0.1),
+  acThermalExhaust: real("ac_thermal_exhaust").notNull().default(0.2),
+  confidenceScore: real("confidence_score").notNull().default(0.85),
   predictedAt: integer("predicted_at", { mode: 'timestamp' }).notNull().defaultNow(),
 });
 

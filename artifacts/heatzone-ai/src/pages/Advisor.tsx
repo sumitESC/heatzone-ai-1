@@ -1,21 +1,23 @@
 import { useState, useRef, useEffect } from "react";
-import { useGetCities, useGetCityDataset } from "@workspace/api-client-react";
+import { useGetCities, useGetCityDataset, useGetCurrentWeather } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, Brain, Car, TreePine, Droplets, Building2, Users, Loader2, PlayCircle, MapPin, ChevronDown, Check, Bot
+  ArrowLeft, Brain, Car, TreePine, Droplets, Building2, Users, Loader2, PlayCircle, MapPin, ChevronDown, Check, Bot, Thermometer, Wind, Cloud, Gauge
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Chatbot } from "@/components/Chatbot";
+
+const weatherEmoji: Record<string, string> = {
+  Clear: "☀️", Clouds: "☁️", Haze: "🌫️", Rain: "🌧️", Mist: "🌁",
+  Drizzle: "🌦️", Thunderstorm: "⛈️", Snow: "❄️", Smoke: "💨", Dust: "🌪️",
+};
 
 export default function Advisor() {
   const { data: cities, isLoading: loadingCities } = useGetCities();
   const [selectedCityId, setSelectedCityId] = useState<number | "">("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Import Chatbot dynamically to avoid circular dependency issues if any
-  // But we can just import it at the top normally.
 
 
   useEffect(() => {
@@ -33,6 +35,27 @@ export default function Advisor() {
     { query: { enabled: selectedCityId !== "", queryKey: ['dataset', selectedCityId] } }
   );
 
+  const { data: currentWeather } = useGetCurrentWeather(
+    selectedCityId !== "" ? selectedCityId : 0,
+    { query: { enabled: selectedCityId !== "", queryKey: ['currentWeather', selectedCityId] } }
+  );
+
+  // Build enriched context for the chatbot with live weather
+  const chatbotContext = dataset && dataset.city ? {
+    ...dataset.city,
+    liveWeather: currentWeather ? {
+      temperature: currentWeather.temperature,
+      feelsLike: currentWeather.feelsLike,
+      humidity: currentWeather.humidity,
+      windSpeed: currentWeather.windSpeed,
+      pressure: currentWeather.pressure,
+      cloudCover: currentWeather.cloudCover,
+      rainfall: currentWeather.rainfall,
+      weatherMain: currentWeather.weatherMain,
+      weatherDescription: currentWeather.weatherDescription,
+    } : undefined
+  } : { status: "No city currently selected by the user. Ask them to name a specific UP city if they want local analysis." };
+
   return (
     <div className="space-y-6 pb-12">
       <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
@@ -44,7 +67,7 @@ export default function Advisor() {
         <div className="relative z-30 w-full">
           <div className="flex items-center gap-3 mb-3">
             <Brain className="w-8 h-8 text-purple-400" />
-            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-white">AI Heat Reduction Advisor</h1>
+            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground">AI Heat Reduction Advisor</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl text-sm md:text-base mb-6">
             Leverage AI to analyze key urban factors for UP cities and generate actionable intelligence for reducing the urban heat island effect.
@@ -115,34 +138,76 @@ export default function Advisor() {
         </div>
       )}
 
+      {/* Live Weather Card */}
+      {currentWeather && !loadingDataset && selectedCityId !== "" && (
+        <LiveWeatherCard weather={currentWeather} />
+      )}
+
       {dataset && !loadingDataset && (
         <AdvisorResults city={dataset.city} />
       )}
-
       {/* Chatbot Section - Always Visible */}
       <div className="mt-8">
         <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
           <Bot className="w-6 h-6 text-purple-400" />
           Interactive AI Advisor
         </h3>
-        <Chatbot contextData={dataset && dataset.city ? dataset.city : { status: "No city currently selected by the user. Ask them to name a specific UP city if they want local analysis." }} />
+        <Chatbot contextData={chatbotContext} />
       </div>
     </div>
   );
 }
 
+function LiveWeatherCard({ weather }: { weather: any }) {
+  const emoji = weatherEmoji[weather.weatherMain] || "🌤️";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="bg-card border border-border/50 rounded-2xl p-6 shadow-lg relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 w-40 h-40 bg-sky-500/5 rounded-bl-[120px] pointer-events-none" />
+      <div className="flex items-center gap-2 mb-4">
+        <Cloud className="w-5 h-5 text-sky-400" />
+        <h3 className="font-bold text-lg">Live Weather — {weather.cityName}</h3>
+        <span className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-md border border-emerald-400/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          LIVE
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+        <WeatherStat icon={<span className="text-2xl">{emoji}</span>} label="Condition" value={weather.weatherDescription} capitalize />
+        <WeatherStat icon={<Thermometer className="w-5 h-5 text-red-400" />} label="Temperature" value={`${weather.temperature.toFixed(1)}°C`} />
+        <WeatherStat icon={<Thermometer className="w-5 h-5 text-orange-400" />} label="Feels Like" value={`${weather.feelsLike.toFixed(1)}°C`} />
+        <WeatherStat icon={<Droplets className="w-5 h-5 text-blue-400" />} label="Humidity" value={`${weather.humidity}%`} />
+        <WeatherStat icon={<Wind className="w-5 h-5 text-sky-400" />} label="Wind" value={`${weather.windSpeed} m/s`} />
+        <WeatherStat icon={<Cloud className="w-5 h-5 text-slate-400" />} label="Clouds" value={`${weather.cloudCover}%`} />
+        <WeatherStat icon={<Gauge className="w-5 h-5 text-violet-400" />} label="Pressure" value={`${weather.pressure} hPa`} />
+      </div>
+    </motion.div>
+  );
+}
+
+function WeatherStat({ icon, label, value, capitalize }: { icon: React.ReactNode; label: string; value: string; capitalize?: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-1 text-center">
+      {icon}
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={`text-sm font-bold font-mono text-foreground ${capitalize ? 'capitalize' : ''}`}>{value}</span>
+    </div>
+  );
+}
+
 function AdvisorResults({ city }: { city: any }) {
-  // Calculations based on requested spec
-  // (city.waterBodiesArea might be undefined if db wasn't pushed, fallback to 10)
   const waterArea = city.waterBodiesArea || 10;
   
   const vehicleDensity = city.totalVehicles / city.totalArea;
-  const greenRatio = (city.forestCover + city.urbanGreenSpace) / 100; // already in percentage terms normally, but spec says area/total. The db has forestCover as %, so let's treat it as ratio if / 100
+  const greenRatio = (city.forestCover + city.urbanGreenSpace) / 100;
   const populationDensity = city.populationDensity; 
   const waterIndex = waterArea / city.totalArea;
   const builtRatio = city.builtUpArea / city.totalArea;
 
-  // Heat Contribution AI Logic
   const rawVehicles = Math.min((vehicleDensity / 5000), 1) * 35; 
   const rawGreen = Math.min((1 - greenRatio), 1) * 30;
   const rawPop = Math.min((populationDensity / 15000), 1) * 20;
@@ -159,7 +224,6 @@ function AdvisorResults({ city }: { city: any }) {
     { name: "Water deficit", value: (rawWater / totalRaw) * 100, icon: Droplets, color: "text-cyan-400", bg: "bg-cyan-400" },
   ].sort((a, b) => b.value - a.value);
 
-  // Suggestions AI Logic
   const suggestions = [];
   if (vehicleDensity > 1000) {
     suggestions.push({
@@ -207,8 +271,6 @@ function AdvisorResults({ city }: { city: any }) {
     });
   }
 
-  // Score Calculation
-  // 100 is best. High heat contributors lower the score.
   const penalty = Math.min((totalRaw / 125) * 100, 95);
   const score = Math.round(100 - penalty);
   

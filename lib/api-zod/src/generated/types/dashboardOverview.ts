@@ -18,6 +18,9 @@ export interface DashboardOverview {
   avgHumidity: number;
   totalVehicles: number;
   avgGreenCover: number;
+  avgNDVI: number;
+  avgNDBI: number;
+  avgEmissionIndex: number;
   lastUpdated: string;
   cityPredictions: HeatPrediction[];
 }

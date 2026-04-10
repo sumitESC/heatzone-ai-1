@@ -1,12 +1,17 @@
 import { useGetDashboardOverview, useGetAllHeatPredictions } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Activity, MapPin, Thermometer, Wind, Car, Leaf, ArrowRight, AlertTriangle } from "lucide-react";
+import { Activity, MapPin, Thermometer, Wind, Car, Leaf, ArrowRight, AlertTriangle, Zap, Building2, Droplets, Cloud, Gauge } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { HeatZoneBadge } from "@/components/HeatZoneBadge";
-import { format } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import { getHeatZoneHex } from "@/lib/utils";
+
+const weatherEmoji: Record<string, string> = {
+  Clear: "☀️", Clouds: "☁️", Haze: "🌫️", Rain: "🌧️", Mist: "🌁",
+  Drizzle: "🌦️", Thunderstorm: "⛈️", Snow: "❄️", Smoke: "💨", Dust: "🌪️",
+  Fog: "🌁", Tornado: "🌪️",
+};
 
 export default function Dashboard() {
   const { data: overview, isLoading: overviewLoading } = useGetDashboardOverview();
@@ -27,14 +32,22 @@ export default function Dashboard() {
 
   const sortedPredictions = [...predictions].sort((a, b) => b.heatRiskScore - a.heatRiskScore);
 
+  // Get city weather map from overview for the live feed
+  const cityWeatherMap = new Map<number, any>();
+  if ((overview as any).cityWeather) {
+    for (const w of (overview as any).cityWeather) {
+      cityWeatherMap.set(w.cityId, w);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-display font-bold text-white mb-2">Platform Overview</h1>
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Platform Overview</h1>
         <p className="text-muted-foreground">Real-time intelligence for Uttar Pradesh urban heat islands.</p>
       </div>
 
-      {/* KPI Cards */}
+      {/* Primary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard 
           title="Monitored Cities" 
@@ -66,6 +79,63 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Live Weather KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <StatCard
+          title="Avg Wind Speed"
+          value={`${((overview as any).avgWindSpeed || 0).toFixed(1)} m/s`}
+          subtitle="Across all cities"
+          icon={<Wind className="w-5 h-5 text-sky-400" />}
+          delay={0.45}
+        />
+        <StatCard
+          title="Avg Humidity"
+          value={`${(overview.avgHumidity || 0)}%`}
+          subtitle="Relative humidity"
+          icon={<Droplets className="w-5 h-5 text-blue-400" />}
+          delay={0.5}
+        />
+        <StatCard
+          title="Avg Cloud Cover"
+          value={`${((overview as any).avgCloudCover || 0)}%`}
+          subtitle="Sky coverage"
+          icon={<Cloud className="w-5 h-5 text-slate-400" />}
+          delay={0.55}
+        />
+        <StatCard
+          title="Avg Pressure"
+          value={`${((overview as any).avgPressure || 0)} hPa`}
+          subtitle="Atmospheric"
+          icon={<Gauge className="w-5 h-5 text-violet-400" />}
+          delay={0.6}
+        />
+      </div>
+
+      {/* ML Intelligence KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <StatCard 
+          title="State-wide NDVI" 
+          value={(overview.avgNDVI || 0).toFixed(3)} 
+          subtitle="Vegetation Health"
+          icon={<Leaf className="w-5 h-5 text-emerald-400" />}
+          delay={0.65}
+        />
+        <StatCard 
+          title="State-wide NDBI" 
+          value={(overview.avgNDBI || 0).toFixed(3)} 
+          subtitle="Concrete Density"
+          icon={<Building2 className="w-5 h-5 text-orange-400" />}
+          delay={0.7}
+        />
+        <StatCard 
+          title="Emission Index" 
+          value={(overview.avgEmissionIndex || 0).toFixed(2)} 
+          subtitle="Avg Heat Contrib"
+          icon={<Zap className="w-5 h-5 text-yellow-400" />}
+          delay={0.75}
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Heat Risk Comparison Chart */}
         <motion.div 
@@ -91,10 +161,13 @@ export default function Dashboard() {
                 <XAxis 
                   dataKey="cityName" 
                   stroke="hsl(var(--muted-foreground))" 
-                  fontSize={12} 
+                  fontSize={10} 
                   tickLine={false}
                   axisLine={false}
                   dy={10}
+                  angle={-35}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))" 
@@ -125,7 +198,7 @@ export default function Dashboard() {
           className="bg-card border border-border/50 rounded-2xl p-6 shadow-xl shadow-black/10 flex flex-col"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-foreground">Live Feed</h3>
+            <h3 className="text-lg font-bold text-foreground">Live Weather Feed</h3>
             <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-md border border-emerald-400/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               LIVE
@@ -133,28 +206,45 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
-            {sortedPredictions.map((city) => (
-              <Link 
-                key={city.cityId} 
-                href={`/city/${city.cityId}`}
-                className="block p-4 rounded-xl border border-border hover:border-primary/50 bg-secondary/30 hover:bg-secondary transition-all duration-200 group"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-bold text-foreground group-hover:text-primary transition-colors">{city.cityName}</span>
-                  <HeatZoneBadge zone={city.heatZone} />
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Thermometer className="w-4 h-4" />
-                    {(city.temperature || 0).toFixed(1)}°C
+            {sortedPredictions.map((city) => {
+              const weather = cityWeatherMap.get(city.cityId);
+              const emoji = weather ? (weatherEmoji[weather.weatherMain] || "🌤️") : "🌤️";
+              return (
+                <Link 
+                  key={city.cityId} 
+                  href={`/city/${city.cityId}`}
+                  className="block p-4 rounded-xl border border-border hover:border-primary/50 bg-secondary/30 hover:bg-secondary transition-all duration-200 group"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-bold text-foreground group-hover:text-primary transition-colors">{city.cityName}</span>
+                    <HeatZoneBadge zone={city.heatZone} />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Car className="w-4 h-4" />
-                    {((city.vehicleDensity || 0) / 1000).toFixed(1)}k /km²
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-1" title="Temperature">
+                      <span>{emoji}</span>
+                      <span className="font-mono font-semibold text-foreground">{(city.temperature || 0).toFixed(1)}°C</span>
+                    </div>
+                    {weather && (
+                      <>
+                        <div className="flex items-center gap-1" title="Humidity">
+                          <Droplets className="w-3.5 h-3.5 text-blue-400" />
+                          <span>{weather.humidity}%</span>
+                        </div>
+                        <div className="flex items-center gap-1" title="Wind">
+                          <Wind className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{weather.windSpeed}m/s</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  {weather && (
+                    <div className="mt-1.5 text-xs text-muted-foreground/70 capitalize">
+                      {weather.weatherDescription}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </motion.div>
       </div>

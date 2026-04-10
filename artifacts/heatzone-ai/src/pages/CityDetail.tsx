@@ -39,7 +39,7 @@ export default function CityDetail() {
         <AlertCircle className="w-12 h-12 mx-auto mb-4" />
         <h2 className="text-xl font-bold mb-2">Profile Not Found</h2>
         <p>Could not retrieve data for this city. It might not exist in the database.</p>
-        <Link href="/" className="inline-block mt-4 text-white bg-secondary px-4 py-2 rounded-lg hover:bg-secondary/80">
+        <Link href="/" className="inline-block mt-4 text-foreground bg-secondary px-4 py-2 rounded-lg hover:bg-secondary/80">
           Back to Dashboard
         </Link>
       </div>
@@ -75,7 +75,7 @@ export default function CityDetail() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl font-display font-extrabold text-white mb-3">{city.name}</h1>
+          <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-3">{city.name}</h1>
           <div className="flex flex-wrap items-center gap-3">
             <HeatZoneBadge zone={latestPrediction?.heatZone || 'unknown'} className="text-sm px-4 py-1.5" />
             <span className="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
@@ -212,7 +212,7 @@ export default function CityDetail() {
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col gap-3"
             >
-              <h3 className="font-bold text-lg text-white mb-1">AI Interventions</h3>
+              <h3 className="font-bold text-lg text-foreground mb-1">AI Interventions</h3>
               {recommendations.slice(0, 3).map((rec, i) => (
                 <div key={rec.id} className="bg-secondary/40 border border-border/50 rounded-xl p-4 hover:bg-secondary transition-colors">
                   <div className="flex justify-between items-start mb-2">
